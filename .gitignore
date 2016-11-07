@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 *.o
 *~
 
@@ -50,3 +51,34 @@ CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 Makefile
+=======
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+>>>>>>> cecc608b16cf43a6e354cd3685d862651fe6041f
