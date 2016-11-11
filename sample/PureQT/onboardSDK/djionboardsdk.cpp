@@ -183,7 +183,11 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
 
     QFile f("settings.ini");
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        ui->lineEdit_ID->setText("1033762");
+        ui->lineEdit_Key->setText("0bb939906a5e2232ca39d69e7345778cbac3cf1ba609f189248b13c816850674");
         qDebug() << "fail to open";
+    }
     else
     {
         while (!f.atEnd())

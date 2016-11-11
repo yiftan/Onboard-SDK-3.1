@@ -200,7 +200,11 @@
                      </widget>
                     </item>
                     <item>
-                     <widget class="QLineEdit" name="lineEdit_ID"/>
+                     <widget class="QLineEdit" name="lineEdit_ID">
+                      <property name="text">
+                       <string>1033762</string>
+                      </property>
+                     </widget>
                     </item>
                    </layout>
                   </item>
@@ -216,7 +220,7 @@
                     <item>
                      <widget class="QLineEdit" name="lineEdit_Key">
                       <property name="text">
-                       <string/>
+                       <string>0bb939906a5e2232ca39d69e7345778cbac3cf1ba609f189248b13c816850674</string>
                       </property>
                       <property name="clearButtonEnabled">
                        <bool>false</bool>
@@ -7048,18 +7052,18 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="btg_cameraAngle"/>
-  <buttongroup name="btg_cameraPitch"/>
-  <buttongroup name="btg_flightTask"/>
-  <buttongroup name="btg_flightCL"/>
   <buttongroup name="btg_flightYL"/>
-  <buttongroup name="btg_flightHL"/>
-  <buttongroup name="btg_vrcMode"/>
-  <buttongroup name="btg_flightSM"/>
-  <buttongroup name="btg_cameraRoll"/>
-  <buttongroup name="btg_flightVL"/>
-  <buttongroup name="btg_vrcGear"/>
   <buttongroup name="btg_cameraYaw"/>
+  <buttongroup name="btg_flightSM"/>
+  <buttongroup name="btg_flightTask"/>
   <buttongroup name="btg_cameraMode"/>
+  <buttongroup name="btg_cameraAngle"/>
+  <buttongroup name="btg_vrcGear"/>
+  <buttongroup name="btg_cameraPitch"/>
+  <buttongroup name="btg_vrcMode"/>
+  <buttongroup name="btg_flightHL"/>
+  <buttongroup name="btg_cameraRoll"/>
+  <buttongroup name="btg_flightCL"/>
+  <buttongroup name="btg_flightVL"/>
  </buttongroups>
 </ui>
