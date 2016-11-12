@@ -1598,6 +1598,7 @@ void DJIonboardSDK::on_btn_wp_loadOne_clicked()
         //WayPointData data;
         wayPointDataTmp.index = index;
         wayPointDataTmp.latitude = waypointData->index(index, 1).data().toDouble()*DEG2RAD;
+        qDebug<<waypointData->index(index, 1).data();
         wayPointDataTmp.longitude = waypointData->index(index, 2).data().toDouble()*DEG2RAD;
         wayPointDataTmp.altitude = waypointData->index(index, 3).data().toDouble();
         wayPointDataTmp.damping = 0; //! @note not available now
