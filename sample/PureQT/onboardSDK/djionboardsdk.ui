@@ -60,7 +60,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="tbFlight">
            <attribute name="title">
@@ -6940,11 +6940,6 @@
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="tbEmpty">
-           <attribute name="title">
-            <string>Empty</string>
-           </attribute>
-          </widget>
          </widget>
         </item>
        </layout>
@@ -7052,18 +7047,18 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="btg_flightYL"/>
-  <buttongroup name="btg_cameraYaw"/>
-  <buttongroup name="btg_flightSM"/>
-  <buttongroup name="btg_flightTask"/>
-  <buttongroup name="btg_cameraMode"/>
   <buttongroup name="btg_cameraAngle"/>
-  <buttongroup name="btg_vrcGear"/>
-  <buttongroup name="btg_cameraPitch"/>
-  <buttongroup name="btg_vrcMode"/>
-  <buttongroup name="btg_flightHL"/>
+  <buttongroup name="btg_flightYL"/>
   <buttongroup name="btg_cameraRoll"/>
   <buttongroup name="btg_flightCL"/>
+  <buttongroup name="btg_flightTask"/>
+  <buttongroup name="btg_vrcGear"/>
   <buttongroup name="btg_flightVL"/>
+  <buttongroup name="btg_cameraPitch"/>
+  <buttongroup name="btg_vrcMode"/>
+  <buttongroup name="btg_flightSM"/>
+  <buttongroup name="btg_flightHL"/>
+  <buttongroup name="btg_cameraMode"/>
+  <buttongroup name="btg_cameraYaw"/>
  </buttongroups>
 </ui>

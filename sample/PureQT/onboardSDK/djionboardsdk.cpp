@@ -1363,7 +1363,7 @@ void DJIonboardSDK::wpAddPoint()
     int number = waypointData->rowCount();
     waypointData->setItem(number, 0, new QStandardItem(QString::number(number)));
     waypointData->setItem(number, 1,
-                          new QStandardItem(QString::number(flight->getPosition().latitude/DEG2RAD)));
+                          new QStandardItem(QString::number(flight->getPosition().latitude/DEG2RAD,'g',11)));
     waypointData->setItem(number, 2,
                           new QStandardItem(QString::number(flight->getPosition().longitude/DEG2RAD)));
     waypointData->setItem(number, 3,
