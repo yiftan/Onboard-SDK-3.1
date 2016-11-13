@@ -241,6 +241,12 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_AbortWaypoint_clicked();
 
+    void on_btn_plp_init_clicked();
+
+    void on_btn_plp_loadAll_clicked();
+
+    void on_btn_plp_start_stop_clicked(bool checked);
+
 private:
 #ifdef GROUNDSTATION
   private:

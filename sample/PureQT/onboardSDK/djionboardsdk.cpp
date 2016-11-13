@@ -1398,6 +1398,7 @@ void DJIonboardSDK::on_btn_waypoint_init_clicked()
     // wp->setInfo(data);
     // wp->init();
     wp->init(&data);
+    plp->init(&data);
     //on_btn_waypoint_add_clicked();
 #ifdef GROUNDSTATION
     initMap();
@@ -1651,6 +1652,8 @@ void DJIonboardSDK::on_btn_wp_loadOne_clicked()
         //            qDebug() << wayPointDataTmp.commandList[i] << wayPointDataTmp.commandParameter[i];
         if (!wp->uploadIndexData(&wayPointDataTmp))
             qDebug() << "fail";
+        if(!plp->uploadIndexData(&wayPointDataTmp))
+            qDebug() << "fail";
     }
 }
 
@@ -1779,4 +1782,23 @@ void DJIonboardSDK::on_btn_AbortWaypoint_clicked()
 
     wp->stop();
 
+}
+
+void DJIonboardSDK::on_btn_plp_init_clicked()
+{
+    on_btn_waypoint_init_clicked();
+}
+
+void DJIonboardSDK::on_btn_plp_loadAll_clicked()
+{
+    for (int i = 0; i < ui->cb_waypoint_point->count() - 1; ++i)
+    {
+        ui->cb_waypoint_point->setCurrentIndex(i + 1);
+        on_btn_wp_loadOne_clicked();
+    }
+}
+
+void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
+{
+    plp->start();
 }

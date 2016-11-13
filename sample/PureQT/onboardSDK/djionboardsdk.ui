@@ -6873,20 +6873,61 @@
                    </layout>
                   </item>
                   <item>
-                   <spacer name="horizontalSpacer_6">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                     <enum>QSizePolicy::Expanding</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
+                   <layout class="QVBoxLayout" name="verticalLayout_57">
+                    <item>
+                     <widget class="QPushButton" name="btn_plp_init">
+                      <property name="minimumSize">
+                       <size>
+                        <width>150</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>150</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>#2: Init Power Line Patrol</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_plp_loadAll">
+                      <property name="text">
+                       <string>#3: Load All Waypoints</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_plp_start_stop">
+                      <property name="text">
+                       <string>#4: Start PLP Mission</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_Abortplp">
+                      <property name="text">
+                       <string>#5: Abort PLP Mission</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_plp_pr">
+                      <property name="text">
+                       <string>Pause Flight</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
                   </item>
                  </layout>
                 </widget>
@@ -7047,18 +7088,18 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="btg_cameraPitch"/>
-  <buttongroup name="btg_flightCL"/>
   <buttongroup name="btg_flightYL"/>
-  <buttongroup name="btg_cameraAngle"/>
   <buttongroup name="btg_flightVL"/>
   <buttongroup name="btg_vrcMode"/>
+  <buttongroup name="btg_cameraMode"/>
   <buttongroup name="btg_flightHL"/>
+  <buttongroup name="btg_cameraRoll"/>
+  <buttongroup name="btg_cameraPitch"/>
+  <buttongroup name="btg_flightTask"/>
+  <buttongroup name="btg_flightCL"/>
   <buttongroup name="btg_vrcGear"/>
   <buttongroup name="btg_cameraYaw"/>
-  <buttongroup name="btg_flightTask"/>
-  <buttongroup name="btg_cameraMode"/>
-  <buttongroup name="btg_cameraRoll"/>
+  <buttongroup name="btg_cameraAngle"/>
   <buttongroup name="btg_flightSM"/>
  </buttongroups>
 </ui>
