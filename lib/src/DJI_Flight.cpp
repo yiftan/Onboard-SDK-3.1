@@ -61,7 +61,7 @@ unsigned short Flight::task(TASK taskname, int timeout)
 void Flight::setArm(bool enable, CallBack ArmCallback, UserData userData)
 {
   uint8_t data = enable ? 1 : 0;
-  api->send(2, encrypt, SET_CONTROL, CODE_SETARM, &data, 1, 0, 1,
+  api->send(2, encrypt, SET_CONTROL, CODE_SETA_RM, &data, 1, 0, 1,
       ArmCallback ? ArmCallback : Flight::armCallback, userData);
 }
 

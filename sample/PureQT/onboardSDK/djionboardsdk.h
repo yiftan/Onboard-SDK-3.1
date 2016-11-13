@@ -19,6 +19,7 @@
 #include "uidev.h"
 #endif
 #include "QonboardSDK.h"
+#include "powerlinepatrol.h"
 
 #define   DEG2RAD 0.01745329252
 
@@ -291,6 +292,8 @@ private:
     QTimer *timerBroadcast;
 
     WayPointData wayPointDataTmp;
+
+    PowerLinePatrol *plp;
 
 
 #ifdef SDK_DEV
