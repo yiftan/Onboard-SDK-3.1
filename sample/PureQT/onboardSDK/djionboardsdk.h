@@ -19,6 +19,7 @@
 #include "uidev.h"
 #endif
 #include "QonboardSDK.h"
+#include "powerlinepatrol.h"
 
 #define   DEG2RAD 0.01745329252
 
@@ -240,6 +241,12 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_AbortWaypoint_clicked();
 
+    void on_btn_plp_init_clicked();
+
+    void on_btn_plp_loadAll_clicked();
+
+    void on_btn_plp_start_stop_clicked(bool checked);
+
 private:
 #ifdef GROUNDSTATION
   private:
@@ -291,6 +298,8 @@ private:
     QTimer *timerBroadcast;
 
     WayPointData wayPointDataTmp;
+
+    PowerLinePatrol *plp;
 
 
 #ifdef SDK_DEV

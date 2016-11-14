@@ -21,10 +21,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 HEADERS  += djionboardsdk.h \
             QonboardSDK.h \
+    powerlinepatrol.h
 
 SOURCES += main.cpp\
            djionboardsdk.cpp \
-           QonboardSDK.cpp
+           QonboardSDK.cpp \
+    powerlinepatrol.cpp
 
 DJILIB += ONBOARDSDK\
           #GROUNDSTATION\
