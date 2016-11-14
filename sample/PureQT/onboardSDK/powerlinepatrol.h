@@ -18,11 +18,13 @@ public:
     void setIndex(WayPointData *value, size_t pos);
     bool uploadIndexData(uint8_t pos);
     bool uploadIndexData(WayPointData *data);
-    void start();
+    void startMission();
+    PositionData nextPosition();
     WayPointInitData getInfo() const;
 private:
     WayPointInitData info;
     WayPointData *index;
+    int posindex;
 
 
 };

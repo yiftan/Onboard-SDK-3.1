@@ -54,14 +54,25 @@ bool PowerLinePatrol::uploadIndexData(uint8_t pos)
 
     return true;
 }
-void PowerLinePatrol::start()
+void PowerLinePatrol::startMission()
 {
-    #define C_EARTH (double) 6378137.0
-    /* From GPS to Ground */
+    posindex=0;
+}
+
+PositionData PowerLinePatrol::nextPosition()
+{
+    PositionData pos;
+    if(posindex >= info.indexNumber)
     {
-        double dlati = lati-origin_lati;
-        double dlongti= longti-origin_longti;
-        double x = dlati * C_EARTH;
-        double y = dlongti * C_EARTH * cos(lati / 2.0 + origin_lati / 2.0);
+        pos.health=0;
     }
+    else
+    {
+        pos.latitude=index[posindex].latitude;
+        pos.longitude=index[posindex].longitude;
+        pos.height=index[posindex].altitude;
+        pos.health=posindex+1;
+        posindex++;
+    }
+    return pos;
 }
