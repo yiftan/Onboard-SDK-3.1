@@ -277,7 +277,15 @@ void DJIonboardSDK::plpMission()
         nextPos=plp->nextPosition();
         qDebug()<<nextPos.health;
     }
-
+    //remote control will become invalid due to unknown reason, reacquire control to enable remote control.
+    if (ui->btn_coreSetControl->text() == "Release Control")
+    {
+        api->setControl(false, DJIonboardSDK::setControlCallback, this);
+        QEventLoop eventloop;
+        QTimer::singleShot(100, &eventloop, SLOT(quit()));
+        eventloop.exec();
+        api->setControl(true, DJIonboardSDK::setControlCallback, this);
+    }
 }
 
 void DJIonboardSDK::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
@@ -352,7 +360,9 @@ int DJIonboardSDK::moveByPositionOffset(float32_t xOffsetDesired, float32_t yOff
     }
 
     //MovementControl API call
+
     flight->setMovementControl(flag,xCmd, yCmd, zCmd, yawDesired);
+
     //sleep(20)
     QEventLoop eventloop;
     QTimer::singleShot(20, &eventloop, SLOT(quit()));
@@ -1717,9 +1727,9 @@ void DJIonboardSDK::on_btn_wp_loadOne_clicked()
         //WayPointData data;
         wayPointDataTmp.index = index;
         wayPointDataTmp.latitude = waypointData->index(index, 1).data().toDouble()*DEG2RAD;
-        qDebug()<<waypointData->index(index, 1).data();
+        //qDebug()<<waypointData->index(index, 1).data();
         wayPointDataTmp.longitude = waypointData->index(index, 2).data().toDouble()*DEG2RAD;
-        qDebug()<<waypointData->index(index, 2).data();
+        //qDebug()<<waypointData->index(index, 2).data();
         wayPointDataTmp.altitude = waypointData->index(index, 3).data().toDouble();
         wayPointDataTmp.damping = 0; //! @note not available now
 
