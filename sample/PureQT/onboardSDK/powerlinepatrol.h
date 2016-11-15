@@ -21,6 +21,7 @@ public:
     void startMission();
     PositionData nextPosition();
     WayPointInitData getInfo() const;
+    bool plpMissionclicked;
 private:
     WayPointInitData info;
     WayPointData *index;

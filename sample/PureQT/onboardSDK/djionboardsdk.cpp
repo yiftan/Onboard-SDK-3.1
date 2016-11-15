@@ -1524,8 +1524,10 @@ void DJIonboardSDK::on_btn_waypoint_init_clicked()
     //! @note these are two different way to offer a same init.
     // wp->setInfo(data);
     // wp->init();
-    wp->init(&data);
-    plp->init(&data);
+    if(!plp->plpMissionclicked)
+        wp->init(&data);
+    else
+        plp->init(&data);
     //on_btn_waypoint_add_clicked();
 #ifdef GROUNDSTATION
     initMap();
@@ -1572,6 +1574,10 @@ void DJIonboardSDK::initSDK()
     refreshPort();
     setPort();
     setBaudrate();
+    //set DJISDK port
+    int findindex=0;
+    findindex=ui->comboBox_portName->findText("COM6");
+    ui->comboBox_portName->setCurrentIndex(findindex);
 }
 
 void DJIonboardSDK::on_cb_waypoint_point_currentIndexChanged(int index)
@@ -1777,10 +1783,12 @@ void DJIonboardSDK::on_btn_wp_loadOne_clicked()
         //                 << wayPointDataTmp.actionRepeat;
         //        for (int i = 0; i < 15; ++i)
         //            qDebug() << wayPointDataTmp.commandList[i] << wayPointDataTmp.commandParameter[i];
-        if (!wp->uploadIndexData(&wayPointDataTmp))
-            qDebug() << "fail";
-        if(!plp->uploadIndexData(&wayPointDataTmp))
-            qDebug() << "fail";
+        if(!plp->plpMissionclicked)
+            if (!wp->uploadIndexData(&wayPointDataTmp))
+                qDebug() << "fail";
+        else
+            if(!plp->uploadIndexData(&wayPointDataTmp))
+                qDebug() << "fail";
     }
 }
 
@@ -1913,6 +1921,7 @@ void DJIonboardSDK::on_btn_AbortWaypoint_clicked()
 
 void DJIonboardSDK::on_btn_plp_init_clicked()
 {
+    plp->plpMissionclicked=true;
     on_btn_waypoint_init_clicked();
 }
 
@@ -1923,6 +1932,7 @@ void DJIonboardSDK::on_btn_plp_loadAll_clicked()
         ui->cb_waypoint_point->setCurrentIndex(i + 1);
         on_btn_wp_loadOne_clicked();
     }
+    plp->plpMissionclicked=false;
 }
 
 void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
