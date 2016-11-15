@@ -272,7 +272,10 @@ void DJIonboardSDK::plpMission()
     while(nextPos.health)
     {
         localOffsetFromGpsOffset(curLocalOffset,&nextPos,&curPos);
-        moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0);
+        if(nextPos.health==plp->getInfo().indexNumber)
+            moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0,60000,1,5);
+        else
+            moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0);
         curPos=api->getBroadcastData().pos;
         nextPos=plp->nextPosition();
         qDebug()<<nextPos.health;
@@ -1570,7 +1573,6 @@ void DJIonboardSDK::initSDK()
     hp = new HotPoint(api);
     wp = new WayPoint(api);
     plp = new PowerLinePatrol();
-
     refreshPort();
     setPort();
     setBaudrate();
@@ -1578,6 +1580,7 @@ void DJIonboardSDK::initSDK()
     int findindex=0;
     findindex=ui->comboBox_portName->findText("COM6");
     ui->comboBox_portName->setCurrentIndex(findindex);
+
 }
 
 void DJIonboardSDK::on_cb_waypoint_point_currentIndexChanged(int index)
