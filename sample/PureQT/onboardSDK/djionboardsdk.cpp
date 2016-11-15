@@ -221,6 +221,8 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     devLayout->addWidget(dev);
     ui->tbDev->setLayout(devLayout);
 #endif // SDK_DEV
+    on_btn_portOpen_clicked();
+    on_btn_coreActive_clicked();
 }
 
 DJIonboardSDK::~DJIonboardSDK()
@@ -273,7 +275,7 @@ void DJIonboardSDK::plpMission()
     {
         localOffsetFromGpsOffset(curLocalOffset,&nextPos,&curPos);
         if(nextPos.health==plp->getInfo().indexNumber)
-            moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0,60000,1,5);
+            moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0,60000,1,10);
         else
             moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0);
         curPos=api->getBroadcastData().pos;
@@ -285,10 +287,11 @@ void DJIonboardSDK::plpMission()
     {
         api->setControl(false, DJIonboardSDK::setControlCallback, this);
         QEventLoop eventloop;
-        QTimer::singleShot(100, &eventloop, SLOT(quit()));
+        QTimer::singleShot(1000, &eventloop, SLOT(quit()));
         eventloop.exec();
         api->setControl(true, DJIonboardSDK::setControlCallback, this);
     }
+    qDebug()<<"plpMission exit";
 }
 
 void DJIonboardSDK::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
@@ -328,7 +331,7 @@ int DJIonboardSDK::moveByPositionOffset(float32_t xOffsetDesired, float32_t yOff
   float32_t posThresholdInM = posThresholdInCm/100;
 
   int elapsedTime = 0;
-  int speedFactor = 2;
+  float speedFactor = 2;
   float xCmd, yCmd, zCmd;
 
   /*! Calculate the inputs to send the position controller. We implement basic
@@ -383,6 +386,8 @@ int DJIonboardSDK::moveByPositionOffset(float32_t xOffsetDesired, float32_t yOff
     yOffsetRemaining = yOffsetDesired - curLocalOffset.y;
     zOffsetRemaining = zOffsetDesired - curLocalOffset.z;
     //See if we need to modify the setpoint
+    if(std::abs(xOffsetRemaining)<speedFactor*1.5&&std::abs(yOffsetRemaining)<speedFactor*1.5)
+        speedFactor/=2.0;
     if (std::abs(xOffsetRemaining) < speedFactor)
       xCmd = xOffsetRemaining;
     if (std::abs(yOffsetRemaining) < speedFactor)
@@ -1579,8 +1584,8 @@ void DJIonboardSDK::initSDK()
     //set DJISDK port
     int findindex=0;
     findindex=ui->comboBox_portName->findText("COM6");
-    ui->comboBox_portName->setCurrentIndex(findindex);
-
+    if(findindex!=-1)
+        ui->comboBox_portName->setCurrentIndex(findindex);
 }
 
 void DJIonboardSDK::on_cb_waypoint_point_currentIndexChanged(int index)
@@ -1787,11 +1792,15 @@ void DJIonboardSDK::on_btn_wp_loadOne_clicked()
         //        for (int i = 0; i < 15; ++i)
         //            qDebug() << wayPointDataTmp.commandList[i] << wayPointDataTmp.commandParameter[i];
         if(!plp->plpMissionclicked)
+        {
             if (!wp->uploadIndexData(&wayPointDataTmp))
                 qDebug() << "fail";
+        }
         else
+        {
             if(!plp->uploadIndexData(&wayPointDataTmp))
                 qDebug() << "fail";
+        }
     }
 }
 
@@ -1930,6 +1939,8 @@ void DJIonboardSDK::on_btn_plp_init_clicked()
 
 void DJIonboardSDK::on_btn_plp_loadAll_clicked()
 {
+    if(plp->plpMissionclicked==false)
+        on_btn_plp_init_clicked();
     for (int i = 0; i < ui->cb_waypoint_point->count() - 1; ++i)
     {
         ui->cb_waypoint_point->setCurrentIndex(i + 1);

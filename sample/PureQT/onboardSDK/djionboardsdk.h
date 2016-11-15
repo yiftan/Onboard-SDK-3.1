@@ -84,7 +84,7 @@ class DJIonboardSDK : public QMainWindow
     void plpMission();
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,PositionData* target, PositionData* origin);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired ,
-                             int timeoutInMs=60000, float yawThresholdInDeg=1, float posThresholdInCm=10.0);
+                             int timeoutInMs=60000, float yawThresholdInDeg=1, float posThresholdInCm=30.0);
 
   private slots:
     //! @note too much slots, tired to rename.
