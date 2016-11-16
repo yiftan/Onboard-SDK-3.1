@@ -3,7 +3,9 @@ using namespace DJI::onboardSDK;
 
 PowerLinePatrol::PowerLinePatrol()
 {
-    plpMissionclicked=false;
+    Missionclicked=false;
+    abortMission=false;
+    isRunning=false;
 }
 void PowerLinePatrol::init(WayPointInitData *Info)
 {

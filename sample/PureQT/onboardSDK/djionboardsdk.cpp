@@ -221,8 +221,10 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     devLayout->addWidget(dev);
     ui->tbDev->setLayout(devLayout);
 #endif // SDK_DEV
-    on_btn_portOpen_clicked();
-    on_btn_coreActive_clicked();
+    activateTimer = new QTimer();
+    activateTimer->setInterval(500);
+    connect(activateTimer, SIGNAL(timeout()), this, SLOT(autoActivate()));
+    activateTimer->start();
 }
 
 DJIonboardSDK::~DJIonboardSDK()
@@ -269,29 +271,27 @@ void DJIonboardSDK::plpMission()
     plp->startMission();
     PositionData curPos=api->getBroadcastData().pos;
     PositionData nextPos=plp->nextPosition();
-    qDebug()<<nextPos.health;
     DJI::Vector3dData curLocalOffset;
     while(nextPos.health)
     {
+        sprintf(DJI::onboardSDK::buffer, "%s%d","PLPMission, Fly to point ",nextPos.health);
+        api->serialDevice->displayLog();
         localOffsetFromGpsOffset(curLocalOffset,&nextPos,&curPos);
         if(nextPos.health==plp->getInfo().indexNumber)
             moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0,60000,1,10);
         else
             moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0);
+        if(plp->abortMission)
+        {
+            plp->abortMission=false;
+            plp->isRunning=false;
+            break;
+        }
         curPos=api->getBroadcastData().pos;
         nextPos=plp->nextPosition();
-        qDebug()<<nextPos.health;
     }
-    //remote control will become invalid due to unknown reason, reacquire control to enable remote control.
-    if (ui->btn_coreSetControl->text() == "Release Control")
-    {
-        api->setControl(false, DJIonboardSDK::setControlCallback, this);
-        QEventLoop eventloop;
-        QTimer::singleShot(1000, &eventloop, SLOT(quit()));
-        eventloop.exec();
-        api->setControl(true, DJIonboardSDK::setControlCallback, this);
-    }
-    qDebug()<<"plpMission exit";
+    sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
+    api->serialDevice->displayLog();
 }
 
 void DJIonboardSDK::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
@@ -364,6 +364,12 @@ int DJIonboardSDK::moveByPositionOffset(float32_t xOffsetDesired, float32_t yOff
     {
         break;
     }
+    if(plp->abortMission)
+    {
+        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Mission aborted");
+        api->serialDevice->displayLog();
+        break;
+    }
 
     //MovementControl API call
 
@@ -418,7 +424,7 @@ void DJIonboardSDK::setControlCallback(CoreAPI *This, Header *header, UserData u
     {
         case ACK_SETCONTROL_NEED_MODE_F:
             if (sdk)
-                sdk->ui->btn_coreSetControl->setText("Swtich to mod F");
+                sdk->ui->btn_coreSetControl->setText("Switch to mod F");
             else
                 API_LOG(sdk->driver, ERROR_LOG, "known SDK pointer 0.");
             break;
@@ -1532,7 +1538,7 @@ void DJIonboardSDK::on_btn_waypoint_init_clicked()
     //! @note these are two different way to offer a same init.
     // wp->setInfo(data);
     // wp->init();
-    if(!plp->plpMissionclicked)
+    if(!plp->Missionclicked)
         wp->init(&data);
     else
         plp->init(&data);
@@ -1581,11 +1587,6 @@ void DJIonboardSDK::initSDK()
     refreshPort();
     setPort();
     setBaudrate();
-    //set DJISDK port
-    int findindex=0;
-    findindex=ui->comboBox_portName->findText("COM6");
-    if(findindex!=-1)
-        ui->comboBox_portName->setCurrentIndex(findindex);
 }
 
 void DJIonboardSDK::on_cb_waypoint_point_currentIndexChanged(int index)
@@ -1791,7 +1792,7 @@ void DJIonboardSDK::on_btn_wp_loadOne_clicked()
         //                 << wayPointDataTmp.actionRepeat;
         //        for (int i = 0; i < 15; ++i)
         //            qDebug() << wayPointDataTmp.commandList[i] << wayPointDataTmp.commandParameter[i];
-        if(!plp->plpMissionclicked)
+        if(!plp->Missionclicked)
         {
             if (!wp->uploadIndexData(&wayPointDataTmp))
                 qDebug() << "fail";
@@ -1933,23 +1934,89 @@ void DJIonboardSDK::on_btn_AbortWaypoint_clicked()
 
 void DJIonboardSDK::on_btn_plp_init_clicked()
 {
-    plp->plpMissionclicked=true;
+    plp->Missionclicked=true;
     on_btn_waypoint_init_clicked();
+    sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Waypoint inited");
+    api->serialDevice->displayLog();
 }
 
 void DJIonboardSDK::on_btn_plp_loadAll_clicked()
 {
-    if(plp->plpMissionclicked==false)
+    if(plp->Missionclicked==false)
         on_btn_plp_init_clicked();
     for (int i = 0; i < ui->cb_waypoint_point->count() - 1; ++i)
     {
         ui->cb_waypoint_point->setCurrentIndex(i + 1);
         on_btn_wp_loadOne_clicked();
     }
-    plp->plpMissionclicked=false;
+    plp->Missionclicked=false;
+    sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Waypoint loaded");
+    api->serialDevice->displayLog();
 }
 
 void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
 {
+    sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Running...");
+    api->serialDevice->displayLog();
+    plp->isRunning=true;
     plpMission();
+}
+
+void DJIonboardSDK::autoActivate()
+{
+    static int cnt=0;
+    cnt++;
+    if(cnt==1){
+        //set DJISDK port
+        int findindex=0;
+        findindex=ui->comboBox_portName->findText(SDKCOM);
+        if(findindex!=-1)
+        {
+            ui->comboBox_portName->setCurrentIndex(findindex);
+            if(!port->isOpen())
+                on_btn_portOpen_clicked();
+        }
+    }
+    else if(cnt==2)
+    {
+        //auto activate
+        if(port->isOpen()&&ui->btn_coreActive->text()!="Activation Okay")
+        {
+            on_btn_coreActive_clicked();
+        }
+    }
+    else if(cnt==3)
+    {
+        if(ui->btn_coreActive->text()=="Activation Okay"&&
+                ui->btn_coreSetControl->text() != "Release Control")
+        {
+            on_btn_coreSetControl_clicked();
+        }
+    }
+    else if(cnt==4)
+    {
+        if (ui->btn_coreSetControl->text() == "Switch to mod F")
+        {
+            on_btn_coreSetControl_clicked();
+            cnt=3;
+        }
+    }
+    else {
+        if (ui->btn_coreSetControl->text() != "Release Control")
+            cnt=0;
+        else
+            activateTimer->stop();
+    }
+}
+
+void DJIonboardSDK::on_btn_Abortplp_clicked()
+{
+    if(plp->isRunning){
+        plp->abortMission=true;
+    }
+    else
+    {
+        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Abort failed, mission is not running");
+        api->serialDevice->displayLog();
+    }
 }

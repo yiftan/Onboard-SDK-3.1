@@ -22,7 +22,7 @@
 #include "powerlinepatrol.h"
 
 #define   DEG2RAD 0.01745329252
-
+#define   SDKCOM  "COM6"
 using namespace DJI;
 using namespace DJI::onboardSDK;
 
@@ -84,10 +84,12 @@ class DJIonboardSDK : public QMainWindow
     void plpMission();
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,PositionData* target, PositionData* origin);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired ,
-                             int timeoutInMs=60000, float yawThresholdInDeg=1, float posThresholdInCm=30.0);
+                             int timeoutInMs=60000, float yawThresholdInDeg=1, float posThresholdInCm=40.0);
 
   private slots:
     //! @note too much slots, tired to rename.
+    void autoActivate();
+
     void on_btn_portRefresh_clicked();
     void on_btn_portOpen_clicked();
     void on_comboBox_portName_currentIndexChanged(int index);
@@ -251,6 +253,8 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_plp_start_stop_clicked(bool checked);
 
+    void on_btn_Abortplp_clicked();
+
 private:
 #ifdef GROUNDSTATION
   private:
@@ -301,9 +305,12 @@ private:
 
     QTimer *timerBroadcast;
 
+    QTimer *activateTimer;
+
     WayPointData wayPointDataTmp;
 
     PowerLinePatrol *plp;
+
 
 
 #ifdef SDK_DEV
