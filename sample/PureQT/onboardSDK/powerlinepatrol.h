@@ -24,6 +24,10 @@ public:
     bool Missionclicked;
     bool abortMission;
     bool isRunning;
+    bool isObtainControl;
+    bool isLoadWayPoint;
+    bool isTurnOff;
+    bool isLanding;
 private:
     WayPointInitData info;
     WayPointData *index;

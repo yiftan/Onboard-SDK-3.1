@@ -222,7 +222,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     ui->tbDev->setLayout(devLayout);
 #endif // SDK_DEV
     activateTimer = new QTimer();
-    activateTimer->setInterval(500);
+    activateTimer->setInterval(ACTIVEPERIOD);
     connect(activateTimer, SIGNAL(timeout()), this, SLOT(autoActivate()));
     activateTimer->start();
 }
@@ -256,6 +256,8 @@ void DJIonboardSDK::closeEvent(QCloseEvent *)
         f.write(QString("KEY:").append(ui->lineEdit_Key->text()).append("\r\n").toUtf8());
         f.close();
     }
+    if (ui->btn_coreSetControl->text() == "Release Control")
+        api->setControl(false, DJIonboardSDK::setControlCallback, this);
 }
 
 void DJIonboardSDK::timerEvent(QTimerEvent *)
@@ -1180,6 +1182,17 @@ void DJIonboardSDK::on_tmr_Broadcast()
     ui->tb_display->verticalScrollBar()->setValue(
         ui->tb_display->verticalScrollBar()->maximum());
     ui->tb_display->repaint();
+    static uint32_t origintime=0;
+    uint32_t curtime=api->getTime().time;
+    uint32_t timeinterval=curtime-origintime;
+    origintime=curtime;
+    if(timeinterval==0&&activateTimer==NULL)
+    {
+        activateTimer = new QTimer();
+        activateTimer->setInterval(ACTIVEPERIOD);
+        connect(activateTimer, SIGNAL(timeout()), this, SLOT(autoActivate()));
+        activateTimer->start();
+    }
 
     // qDebug()<<api->getFilter().recvIndex;
 }
@@ -1949,6 +1962,7 @@ void DJIonboardSDK::on_btn_plp_loadAll_clicked()
         ui->cb_waypoint_point->setCurrentIndex(i + 1);
         on_btn_wp_loadOne_clicked();
     }
+    plp->isLoadWayPoint=true;
     plp->Missionclicked=false;
     sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Waypoint loaded");
     api->serialDevice->displayLog();
@@ -1956,56 +1970,91 @@ void DJIonboardSDK::on_btn_plp_loadAll_clicked()
 
 void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
 {
-    sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Running...");
-    api->serialDevice->displayLog();
-    plp->isRunning=true;
-    plpMission();
+    if(plp->isLoadWayPoint)
+    {
+        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Running...");
+        api->serialDevice->displayLog();
+        plp->isRunning=true;
+        plpMission();
+    }
+    else
+    {
+        sprintf(DJI::onboardSDK::buffer, "%s","No waypoint");
+        api->serialDevice->displayLog();
+    }
 }
 
 void DJIonboardSDK::autoActivate()
 {
-    static int cnt=0;
-    cnt++;
-    if(cnt==1){
-        //set DJISDK port
-        int findindex=0;
-        findindex=ui->comboBox_portName->findText(SDKCOM);
-        if(findindex!=-1)
-        {
-            ui->comboBox_portName->setCurrentIndex(findindex);
-            if(!port->isOpen())
+    static int cnt=0,origintime=0,cntin=0;
+    int curtime=api->getTime().time;
+    int tinterval=curtime-origintime;
+    origintime=curtime;
+    if(cnt==0){
+        plp->isObtainControl=false;
+        if(!port->isOpen()){
+            on_btn_portRefresh_clicked();
+            int findindex=-1;
+            findindex=ui->comboBox_portName->findText(SDKCOM);
+            if(findindex!=-1)
+            {
+                ui->comboBox_portName->setCurrentIndex(findindex);
                 on_btn_portOpen_clicked();
+            }
+        }
+        else
+        {
+            if(tinterval>0)
+            {
+                ui->btn_coreActive->setText("Activation");
+                cnt=1;
+            }
+            else
+            {
+               port->close();
+            }
+        }
+    }
+    else if(cnt==1)
+    {
+        //auto activate
+        if(!port->isOpen()||tinterval<=0)
+        {
+            cnt=0;
+        }
+        else
+        {
+            if(ui->btn_coreActive->text()=="Activation Okay")
+                cnt=2;
+            else
+                on_btn_coreActive_clicked();
         }
     }
     else if(cnt==2)
     {
-        //auto activate
-        if(port->isOpen()&&ui->btn_coreActive->text()!="Activation Okay")
+        if(!port->isOpen()||tinterval<=0)
         {
-            on_btn_coreActive_clicked();
+            cnt=0;
+        }
+        else
+        {
+            if(cntin==0||ui->btn_coreSetControl->text() != "Release Control")
+                on_btn_coreSetControl_clicked();
+            else
+            {
+                cnt=3;
+            }
+            cntin++;
         }
     }
     else if(cnt==3)
     {
-        if(ui->btn_coreActive->text()=="Activation Okay"&&
-                ui->btn_coreSetControl->text() != "Release Control")
-        {
-            on_btn_coreSetControl_clicked();
-        }
-    }
-    else if(cnt==4)
-    {
-        if (ui->btn_coreSetControl->text() == "Switch to mod F")
-        {
-            on_btn_coreSetControl_clicked();
-            cnt=3;
-        }
-    }
-    else {
-        if (ui->btn_coreSetControl->text() != "Release Control")
-            cnt=0;
-        else
-            activateTimer->stop();
+        plp->isObtainControl=true;
+        activateTimer->stop();
+        delete activateTimer;
+        activateTimer=NULL;
+        cnt=0;
+        cntin=0;
     }
 }
 

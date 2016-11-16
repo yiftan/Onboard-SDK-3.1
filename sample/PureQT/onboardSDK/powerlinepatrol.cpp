@@ -6,6 +6,10 @@ PowerLinePatrol::PowerLinePatrol()
     Missionclicked=false;
     abortMission=false;
     isRunning=false;
+    isObtainControl=false;
+    isLoadWayPoint=false;
+    isTurnOff=false;
+    isLanding=true;
 }
 void PowerLinePatrol::init(WayPointInitData *Info)
 {

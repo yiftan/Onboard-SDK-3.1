@@ -23,6 +23,7 @@
 
 #define   DEG2RAD 0.01745329252
 #define   SDKCOM  "COM6"
+#define   ACTIVEPERIOD 1000
 using namespace DJI;
 using namespace DJI::onboardSDK;
 
@@ -38,6 +39,7 @@ class DJIonboardSDK : public QMainWindow
   public:
     explicit DJIonboardSDK(QWidget *parent = 0);
     ~DJIonboardSDK();
+    void releaseControl();
 
   private:
     void setBaudrate();

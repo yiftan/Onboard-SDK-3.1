@@ -13,6 +13,5 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     DJIonboardSDK w;
     w.showMaximized();
-
     return a.exec();
 }
