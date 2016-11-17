@@ -86,9 +86,12 @@ class DJIonboardSDK : public QMainWindow
     void initWayPoint();
     void initVirtualRC();
     void plpMission();
-    void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin, Angle& angleInDeg);
-    int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired ,
+    void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
+    int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
                              int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=40.0);
+    int moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=35.0);
+    int moveByYawRate(float32_t yawDesired, float32_t zDesired, int timeoutInMs=60000, float yawThresholdIndeg=0.5, float posDesiredInCm=10);
+    void sleepmSec(int mSec);
 
   private slots:
     //! @note too much slots, tired to rename.
