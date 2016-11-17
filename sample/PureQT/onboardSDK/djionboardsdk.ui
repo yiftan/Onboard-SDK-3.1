@@ -6980,7 +6980,7 @@
                     <x>10</x>
                     <y>10</y>
                     <width>281</width>
-                    <height>231</height>
+                    <height>241</height>
                    </rect>
                   </property>
                   <property name="title">
@@ -7034,7 +7034,7 @@
                      </item>
                     </layout>
                    </item>
-                   <item row="2" column="0">
+                   <item row="4" column="0">
                     <widget class="QTextBrowser" name="tb_GPRSDisplay">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -7043,6 +7043,37 @@
                       </sizepolicy>
                      </property>
                     </widget>
+                   </item>
+                   <item row="2" column="0" colspan="2">
+                    <layout class="QHBoxLayout" name="horizontalLayout_127" stretch="0,0,0">
+                     <item>
+                      <widget class="QPushButton" name="btn_GPRSportSend">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="text">
+                        <string>send</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="btn_GPRSportRead">
+                       <property name="text">
+                        <string>read</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="btn_GPRSportClear">
+                       <property name="text">
+                        <string>clean</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="3" column="0" colspan="2">
+                    <widget class="QLineEdit" name="lineEdit_GPRSsend"/>
                    </item>
                   </layout>
                  </widget>
@@ -7160,18 +7191,18 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="btg_cameraRoll"/>
+  <buttongroup name="btg_cameraAngle"/>
+  <buttongroup name="btg_flightCL"/>
+  <buttongroup name="btg_vrcMode"/>
   <buttongroup name="btg_flightHL"/>
   <buttongroup name="btg_flightSM"/>
-  <buttongroup name="btg_vrcMode"/>
   <buttongroup name="btg_cameraMode"/>
   <buttongroup name="btg_flightVL"/>
+  <buttongroup name="btg_cameraRoll"/>
+  <buttongroup name="btg_vrcGear"/>
+  <buttongroup name="btg_cameraYaw"/>
   <buttongroup name="btg_flightTask"/>
   <buttongroup name="btg_cameraPitch"/>
   <buttongroup name="btg_flightYL"/>
-  <buttongroup name="btg_vrcGear"/>
-  <buttongroup name="btg_cameraYaw"/>
-  <buttongroup name="btg_flightCL"/>
-  <buttongroup name="btg_cameraAngle"/>
  </buttongroups>
 </ui>

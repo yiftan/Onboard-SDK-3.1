@@ -131,6 +131,13 @@ void DJIonboardSDK::initCamera()
     connect(cameraSend, SIGNAL(timeout()), this, SLOT(on_tmr_Camera_autosend()));
 }
 
+void DJIonboardSDK::initGPRS()
+{
+    GPRSautoSend=new QTimer();
+    GPRSautoSend->setInterval(1000);
+    connect(GPRSautoSend,SIGNAL(timeout()), this, SLOT(on_tmr_GPRS_autosend()));
+}
+
 void DJIonboardSDK::functionAlloc()
 {
     if (api->getSDKVersion() == versionM100_23)
@@ -178,6 +185,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     initFollow();
     initWayPoint();
     initVirtualRC();
+    initGPRS();
 #ifdef GROUNDSTATION
     initGroundStation();
 #endif // GROUNDSTATION
@@ -551,6 +559,86 @@ void DJIonboardSDK::closeGPRSPort()
     }
 }
 
+void DJIonboardSDK::GPRSDataRead()
+{
+    int GPRSBUF_len=0,cnt=0;
+    QString head="Rev: ";
+
+    char* tmp=(char*)malloc(sizeof(char)*BUFFER_SIZE);
+
+    GPRSBUF_len=GPRSdriver->charreadall(tmp,BUFFER_SIZE);
+
+    if (GPRSBUF_len >0)
+    {
+        for(int i=0;i<GPRSBUF_len-1;i++)
+        {
+            if(tmp[i]==0x0d&&tmp[i+1]==0x0a)
+            {
+                cnt++;
+                if(cnt>1)
+                {
+                    for(int j=i;j<GPRSBUF_len;j++)
+                    {
+                        tmp[j]=0;
+                    }
+                }
+            }
+        }
+        GPRSBUF=QString(QLatin1String(tmp));
+        ui->tb_GPRSDisplay->append(head.append(GPRSBUF));
+    }
+}
+
+void DJIonboardSDK::GPRSDataSend(QString GPRSDATA)
+{
+    size_t GPRSDATA_len=0;
+    QString head="Send: ";
+    GPRSDATA+="\r";
+    char* tmp;
+    QByteArray ba = GPRSDATA.toLatin1();
+    tmp=ba.data();
+
+    GPRSDATA_len = GPRSdriver->charsend(tmp, GPRSDATA.length());
+    if (GPRSDATA_len == 0)
+      API_LOG(GPRSdriver, STATUS_LOG, "Port not send");
+    if (GPRSDATA_len == (size_t)-1)
+    {
+        API_LOG(GPRSdriver, ERROR_LOG, "Port closed");
+    }
+    ui->tb_GPRSDisplay->append(head.append(tmp));
+}
+
+void DJIonboardSDK::GPRSPortCtl()
+{
+    static int flag=0;
+    static int err=0;
+    //QString head="Rev: ";
+
+    if(GPRSport->isOpen())
+    {
+        if(flag<6)
+        {
+            GPRSDataSend(GPRSCommand[flag]);
+            if(GPRSBUF.contains("OK",Qt::CaseSensitive)&&GPRSBUF.contains(GPRSCommand[flag],Qt::CaseSensitive))
+            {
+                flag++;
+                //ui->tb_GPRSDisplay->append(head.append(GPRSBUF));
+                GPRSBUF.clear();
+                err=0;
+            }
+        }
+        //if(GPRSBUF.contains("CONNECT OK")!=0)
+
+        err++; ui->lineEdit_GPRSres->setText("connecting");
+        if(err>1000)
+        {
+            ui->lineEdit_GPRSres->setText("connect failed");
+            //flag=0;
+        }
+    }
+
+}
+
 void DJIonboardSDK::on_btn_portOpen_clicked()
 {
     if (port == 0)
@@ -575,16 +663,46 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
     else
     {
         if(GPRSport->isOpen())
+        {
+            GPRSautoSend->stop();
             closeGPRSPort();
+        }
         else
         {
             setGPRSBaudrate();
             setGPRSPort();
             openGPRSPort();
-            ui->lineEdit_GPRSres->setText("connect ok");
+            GPRSautoSend->start();
+
+            //ui->lineEdit_GPRSres->setText("connect ok");
         }
     }
 
+}
+
+void DJIonboardSDK::on_tmr_GPRS_autosend()
+{
+    GPRSPortCtl();
+    GPRSDataRead();
+}
+
+void DJIonboardSDK::on_btn_GPRSportSend_clicked()
+{
+    //GPRSPortCtl();
+
+    GPRSDATA=ui->lineEdit_GPRSsend->text();
+    GPRSDataSend(GPRSDATA);
+
+}
+
+void DJIonboardSDK::on_btn_GPRSportRead_clicked()
+{
+    GPRSDataRead();
+}
+
+void DJIonboardSDK::on_btn_GPRSportClear_clicked()
+{
+    ui->tb_GPRSDisplay->clear();
 }
 
 
@@ -1222,6 +1340,7 @@ void DJIonboardSDK::on_tmr_Broadcast()
         ui->tb_display->verticalScrollBar()->maximum());
     ui->tb_display->repaint();
 
+
     // qDebug()<<api->getFilter().recvIndex;
 }
 
@@ -1635,6 +1754,7 @@ void DJIonboardSDK::initSDK()
     findindex=ui->comboBox_portName->findText("COM6");
     if (findindex!=-1)
         ui->comboBox_portName->setCurrentIndex(findindex);
+
 }
 
 void DJIonboardSDK::on_cb_waypoint_point_currentIndexChanged(int index)
@@ -1996,4 +2116,3 @@ void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
 {
     plpMission();
 }
-

@@ -28,7 +28,9 @@ class QtOnboardsdkPortDriver : public HardDriver
     void init();
     DJI::time_ms getTimeStamp();
     size_t send(const uint8_t *buf, size_t len);
+    size_t charsend(const char *buf, size_t len);
     size_t readall(uint8_t *buf, size_t maxlen);
+    size_t charreadall(char *buf, size_t maxlen);
 
     void lockMemory();
     void freeMemory();

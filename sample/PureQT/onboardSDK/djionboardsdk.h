@@ -49,8 +49,9 @@ class DJIonboardSDK : public QMainWindow
     void closePort();
     void closeGPRSPort();
     void refreshPort();
+    void GPRSPortCtl();
     void GPRSDataRead();
-    void GPRSDataSend();
+    void GPRSDataSend(QString GPRSDATA);
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -87,6 +88,7 @@ class DJIonboardSDK : public QMainWindow
     void initDisplay();
     void initWayPoint();
     void initVirtualRC();
+    void initGPRS();
     void plpMission();
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,PositionData* target, PositionData* origin);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired ,
@@ -245,6 +247,8 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_gps_read_clicked();
     void on_btn_rtk_read_clicked();
 
+    void on_tmr_GPRS_autosend();
+
     //! @todo sort
 
     void on_btn_webTool_clicked(bool checked);
@@ -266,6 +270,12 @@ class DJIonboardSDK : public QMainWindow
     void on_tbFlight_destroyed();
 
     void on_lineEdit_GPRSportBaudrate_textEdited(const QString &arg1);
+
+    void on_btn_GPRSportSend_clicked();
+
+    void on_btn_GPRSportRead_clicked();
+
+    void on_btn_GPRSportClear_clicked();
 
 private:
 #ifdef GROUNDSTATION
@@ -291,6 +301,16 @@ private:
     QSerialPort *GPRSport;
     QByteArray *key;
     QString GPRSBUF;
+    QString GPRSDATA;
+    QString GPRSCommand[6]={
+        "AT+CGCLASS=\"B\"",
+        "AT+CGDCONT=1,\"IP\",\"CMNET\"",
+        "AT+CGATT=1",
+        "AT+CIPCSGP=1,\"CMNET\"",
+        "AT+CLPORT=\"TCP\",\"2000\"",
+        "AT+CIPSTART=\"TCP\",\"115.230.108.240\",\"9876\""
+    };
+    QTimer *GPRSautoSend;
 
     Flight *flight;
     uint8_t flightFlag;
