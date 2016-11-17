@@ -274,53 +274,71 @@ void DJIonboardSDK::plpMission()
     PositionData curPos=api->getBroadcastData().pos;
     PositionData nextPos=plp->nextPosition();
     DJI::Vector3dData curLocalOffset;
+    Angle angleInDeg;
     while(nextPos.health)
     {
         sprintf(DJI::onboardSDK::buffer, "%s%d","PLPMission, Fly to point ",nextPos.health);
         api->serialDevice->displayLog();
-        localOffsetFromGpsOffset(curLocalOffset,&nextPos,&curPos);
+        localOffsetFromGpsOffset(curLocalOffset,&nextPos,&curPos,angleInDeg);
+        DJI::EulerAngle curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
+        double deg=curEuler.yaw*RAD2DEG;
+        /*if(curLocalOffset)
+        angleInDeg+=deg;*/
+        angleInDeg=60;
+        moveByPositionOffset(0,0,0,angleInDeg);
+        moveByPositionOffset(5,0,0,angleInDeg);
+        deg=Flight::toEulerAngle(api->getBroadcastData().q).yaw*RAD2DEG;
+        localOffsetFromGpsOffset(curLocalOffset,&nextPos,&curPos,angleInDeg);
         if(nextPos.health==plp->getInfo().indexNumber)
-            moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0,60000,1,10);
+            moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,angleInDeg,60000,1,10);
         else
-            moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,0);
+            moveByPositionOffset(curLocalOffset.x,curLocalOffset.y,curLocalOffset.z,angleInDeg);
         if(plp->abortMission)
         {
-            plp->abortMission=false;
-            plp->isRunning=false;
             break;
         }
         curPos=api->getBroadcastData().pos;
         nextPos=plp->nextPosition();
     }
-    sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
-    api->serialDevice->displayLog();
+    if(plp->abortMission)
+    {
+        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Mission aborted");
+        api->serialDevice->displayLog();
+        plp->abortMission=false;
+        plp->isRunning=false;
+    }
+    else
+    {
+        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
+        api->serialDevice->displayLog();
+    }
 }
 
 void DJIonboardSDK::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
-     PositionData* target, PositionData* origin)
+     PositionData* target, PositionData* origin, Angle& angleInDeg)
 {
-    #define C_EARTH (double) 6378137.0
     double deltaLon = target->longitude - origin->longitude;
     double deltaLat = target->latitude - origin->latitude;
     deltaNed.x = deltaLat * C_EARTH;
     deltaNed.y = deltaLon * C_EARTH * cos(target->latitude/2.0+origin->latitude/2.0);
     deltaNed.z = target->height - origin->height;
+    angleInDeg=RAD2DEG*acos(cos(origin->latitude)*cos(target->latitude)*cos(origin->longitude-target->longitude)+sin(origin->latitude)*sin(target->latitude));
 }
 
 int DJIonboardSDK::moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired ,
                          int timeoutInMs, float yawThresholdInDeg, float posThresholdInCm)
 {
-  uint8_t flag = 0x91; //Position Control
+  uint8_t flag = 0x93; //Position Control
 
   // Get current poition
   PositionData curPosition = api->getBroadcastData().pos;
   PositionData originPosition = curPosition;
   DJI::Vector3dData curLocalOffset;
-
+  Angle curAngleOffset;
   DJI::EulerAngle curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
 
   //Convert position offset from first position to local coordinates
-  localOffsetFromGpsOffset(curLocalOffset, &curPosition, &originPosition);
+  localOffsetFromGpsOffset(curLocalOffset, &curPosition, &originPosition,curAngleOffset);
 
   //See how much farther we have to go
   float32_t xOffsetRemaining = xOffsetDesired - curLocalOffset.x;
@@ -368,8 +386,6 @@ int DJIonboardSDK::moveByPositionOffset(float32_t xOffsetDesired, float32_t yOff
     }
     if(plp->abortMission)
     {
-        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Mission aborted");
-        api->serialDevice->displayLog();
         break;
     }
 
@@ -387,7 +403,7 @@ int DJIonboardSDK::moveByPositionOffset(float32_t xOffsetDesired, float32_t yOff
     //Get current position in required coordinates and units
     curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
     curPosition = api->getBroadcastData().pos;
-    localOffsetFromGpsOffset(curLocalOffset, &curPosition, &originPosition);
+    localOffsetFromGpsOffset(curLocalOffset, &curPosition, &originPosition,curAngleOffset);
 
     //See how much farther we have to go
     xOffsetRemaining = xOffsetDesired - curLocalOffset.x;
@@ -1193,6 +1209,7 @@ void DJIonboardSDK::on_tmr_Broadcast()
         connect(activateTimer, SIGNAL(timeout()), this, SLOT(autoActivate()));
         activateTimer->start();
     }
+    qDebug()<<Flight::toEulerAngle(api->getBroadcastData().q).yaw*RAD2DEG;
 
     // qDebug()<<api->getFilter().recvIndex;
 }
@@ -2043,18 +2060,55 @@ void DJIonboardSDK::autoActivate()
             else
             {
                 cnt=3;
+                cntin=-1;
             }
             cntin++;
         }
     }
     else if(cnt==3)
     {
-        plp->isObtainControl=true;
-        activateTimer->stop();
-        delete activateTimer;
-        activateTimer=NULL;
-        cnt=0;
-        cntin=0;
+        if(!port->isOpen()||tinterval<=0)
+        {
+            cnt=0;
+        }
+        else
+        {
+            if(cntin==0)
+            {
+                if(ui->btn_coreSetControl->text() == "Release Control")
+                    on_btn_coreSetControl_clicked();
+                else
+                {
+                    cnt=0;
+                    cntin=-1;
+                }
+            }
+            else if(cntin==1)
+            {
+                if(ui->btn_coreSetControl->text() != "Release Control")
+                    on_btn_coreSetControl_clicked();
+                else
+                {
+                    cnt=0;
+                    cntin=-1;
+                }
+            }
+            else if(ui->btn_coreSetControl->text() == "Release Control")
+            {
+                plp->isObtainControl=true;
+                activateTimer->stop();
+                delete activateTimer;
+                activateTimer=NULL;
+                cnt=0;
+                cntin=-1;
+            }
+            else
+            {
+                cnt=0;
+                cntin=-1;
+            }
+            cntin++;
+        }
     }
 }
 

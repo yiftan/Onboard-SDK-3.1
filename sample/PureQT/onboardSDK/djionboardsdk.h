@@ -21,7 +21,9 @@
 #include "QonboardSDK.h"
 #include "powerlinepatrol.h"
 
-#define   DEG2RAD 0.01745329252
+#define   C_EARTH (double) 6378137.0
+#define   DEG2RAD (double)0.01745329252
+#define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM6"
 #define   ACTIVEPERIOD 1000
 using namespace DJI;
@@ -84,9 +86,9 @@ class DJIonboardSDK : public QMainWindow
     void initWayPoint();
     void initVirtualRC();
     void plpMission();
-    void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,PositionData* target, PositionData* origin);
+    void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin, Angle& angleInDeg);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired ,
-                             int timeoutInMs=60000, float yawThresholdInDeg=1, float posThresholdInCm=40.0);
+                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=40.0);
 
   private slots:
     //! @note too much slots, tired to rename.
