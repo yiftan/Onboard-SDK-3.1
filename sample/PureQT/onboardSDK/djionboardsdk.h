@@ -41,10 +41,16 @@ class DJIonboardSDK : public QMainWindow
 
   private:
     void setBaudrate();
+    void setGPRSBaudrate();
     void setPort();
+    void setGPRSPort();
     void openPort();
+    void openGPRSPort();
     void closePort();
+    void closeGPRSPort();
     void refreshPort();
+    void GPRSDataRead();
+    void GPRSDataSend();
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -251,6 +257,16 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_plp_start_stop_clicked(bool checked);
 
+    void on_btn_GPRSportOpen_clicked();
+
+    void on_tbgprs_windowTitleChanged(const QString &title);
+
+    void on_tbgprs_objectNameChanged(const QString &objectName);
+
+    void on_tbFlight_destroyed();
+
+    void on_lineEdit_GPRSportBaudrate_textEdited(const QString &arg1);
+
 private:
 #ifdef GROUNDSTATION
   private:
@@ -270,8 +286,11 @@ private:
 
     CoreAPI *api;
     QtOnboardsdkPortDriver *driver;
+    QtOnboardsdkPortDriver *GPRSdriver;
     QSerialPort *port;
+    QSerialPort *GPRSport;
     QByteArray *key;
+    QString GPRSBUF;
 
     Flight *flight;
     uint8_t flightFlag;

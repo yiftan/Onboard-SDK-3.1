@@ -33,6 +33,7 @@ void DJIonboardSDK::initDisplay()
     ui->tb_display->setReadOnly(true);
     ui->tb_display->setContextMenuPolicy(Qt::CustomContextMenu);
     driver->setDisplay(ui->tb_display);
+    GPRSdriver->setDisplay(ui->tb_display);
 }
 
 void DJIonboardSDK::initWayPoint()
@@ -497,9 +498,21 @@ void DJIonboardSDK::setBaudrate()
     driver->setBaudrate(baudrate);
 }
 
+void DJIonboardSDK::setGPRSBaudrate()
+{
+    int baudrate = ui->lineEdit_GPRSportBaudrate->text().toInt();
+    GPRSdriver->setBaudrate(baudrate);
+}
+
 void DJIonboardSDK::setPort()
 {
     port->setPortName(ui->comboBox_portName->currentText());
+    //port->setPortName("COM4");
+}
+
+void DJIonboardSDK::setGPRSPort()
+{
+    GPRSport->setPortName("COM3");
 }
 
 void DJIonboardSDK::openPort()
@@ -511,12 +524,30 @@ void DJIonboardSDK::openPort()
         ui->btn_portOpen->setText(port->portName().append(" not exit"));
 }
 
+void DJIonboardSDK::openGPRSPort()
+{
+    GPRSdriver->init();
+    if(GPRSport->isOpen())
+        ui->btn_GPRSportOpen->setText(GPRSport->portName().append(" is open"));
+    else
+        ui->btn_GPRSportOpen->setText(GPRSport->portName().append(" not exit"));
+}
+
 void DJIonboardSDK::closePort()
 {
     port->close();
     if (!port->isOpen())
     {
         ui->btn_portOpen->setText(port->portName().append(" closed"));
+    }
+}
+
+void DJIonboardSDK::closeGPRSPort()
+{
+    GPRSport->close();
+    if (!GPRSport->isOpen())
+    {
+        ui->btn_GPRSportOpen->setText(GPRSport->portName().append(" closed"));
     }
 }
 
@@ -536,6 +567,27 @@ void DJIonboardSDK::on_btn_portOpen_clicked()
         }
     }
 }
+
+void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
+{
+    if(GPRSport==0)
+        ;
+    else
+    {
+        if(GPRSport->isOpen())
+            closeGPRSPort();
+        else
+        {
+            setGPRSBaudrate();
+            setGPRSPort();
+            openGPRSPort();
+            ui->lineEdit_GPRSres->setText("connect ok");
+        }
+    }
+
+}
+
+
 
 void DJIonboardSDK::on_comboBox_portName_currentIndexChanged(int index)
 {
@@ -1563,7 +1615,9 @@ void DJIonboardSDK::wpRemovePoint()
 void DJIonboardSDK::initSDK()
 {
     port = new QSerialPort(this);
+    GPRSport = new QSerialPort(this);
     driver = new QtOnboardsdkPortDriver(port);
+    GPRSdriver = new QtOnboardsdkPortDriver(GPRSport);
     api = new CoreAPI(driver);
     key = new QByteArray;
     flight = new Flight(api);
@@ -1579,8 +1633,8 @@ void DJIonboardSDK::initSDK()
     //set DJISDK port
     int findindex=0;
     findindex=ui->comboBox_portName->findText("COM6");
-    ui->comboBox_portName->setCurrentIndex(findindex);
-
+    if (findindex!=-1)
+        ui->comboBox_portName->setCurrentIndex(findindex);
 }
 
 void DJIonboardSDK::on_cb_waypoint_point_currentIndexChanged(int index)
@@ -1942,3 +1996,4 @@ void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
 {
     plpMission();
 }
+

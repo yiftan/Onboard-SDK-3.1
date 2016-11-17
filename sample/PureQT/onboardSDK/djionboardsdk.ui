@@ -60,7 +60,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="tbFlight">
            <attribute name="title">
@@ -6967,13 +6967,85 @@
                 </layout>
                </item>
                <item>
-                <widget class="QWidget" name="widget_web" native="true">
+                <widget class="QGroupBox" name="groupBox_web">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <widget class="QGroupBox" name="formGroupBox">
+                  <property name="geometry">
+                   <rect>
+                    <x>10</x>
+                    <y>10</y>
+                    <width>281</width>
+                    <height>231</height>
+                   </rect>
+                  </property>
+                  <property name="title">
+                   <string>GPRS</string>
+                  </property>
+                  <layout class="QFormLayout" name="formLayout">
+                   <item row="0" column="0" colspan="2">
+                    <layout class="QHBoxLayout" name="horizontalLayout_45" stretch="2,3">
+                     <item>
+                      <widget class="QLabel" name="label_4">
+                       <property name="maximumSize">
+                        <size>
+                         <width>60</width>
+                         <height>29</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string> Baudrate</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="lineEdit_GPRSportBaudrate">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="text">
+                        <string>9600</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="1" column="0" colspan="2">
+                    <layout class="QHBoxLayout" name="horizontalLayout_60" stretch="2,3">
+                     <item>
+                      <widget class="QPushButton" name="btn_GPRSportOpen">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="text">
+                        <string>open</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="lineEdit_GPRSres"/>
+                     </item>
+                    </layout>
+                   </item>
+                   <item row="2" column="0">
+                    <widget class="QTextBrowser" name="tb_GPRSDisplay">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
                 </widget>
                </item>
               </layout>
@@ -7088,18 +7160,18 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="btg_flightCL"/>
-  <buttongroup name="btg_flightTask"/>
   <buttongroup name="btg_cameraRoll"/>
-  <buttongroup name="btg_flightVL"/>
-  <buttongroup name="btg_cameraYaw"/>
-  <buttongroup name="btg_cameraMode"/>
-  <buttongroup name="btg_cameraPitch"/>
+  <buttongroup name="btg_flightHL"/>
+  <buttongroup name="btg_flightSM"/>
   <buttongroup name="btg_vrcMode"/>
+  <buttongroup name="btg_cameraMode"/>
+  <buttongroup name="btg_flightVL"/>
+  <buttongroup name="btg_flightTask"/>
+  <buttongroup name="btg_cameraPitch"/>
   <buttongroup name="btg_flightYL"/>
   <buttongroup name="btg_vrcGear"/>
-  <buttongroup name="btg_flightSM"/>
-  <buttongroup name="btg_flightHL"/>
+  <buttongroup name="btg_cameraYaw"/>
+  <buttongroup name="btg_flightCL"/>
   <buttongroup name="btg_cameraAngle"/>
  </buttongroups>
 </ui>
