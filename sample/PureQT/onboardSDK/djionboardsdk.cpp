@@ -284,9 +284,16 @@ void DJIonboardSDK::plpMission()
         api->serialDevice->displayLog();
         //control yaw in ground frame, then control position in body frame, position offset calculated from gps.
         if(nextPos.health==plp->getInfo().indexNumber)
-            moveByPositionBodyFrame(&nextPos,60000,0.5,10);
+        {
+            //moveByPositionBodyFrame(&nextPos,60000,0.5,15);
+            moveBySpeedBodyFrame(&nextPos,60000,0.5,15);
+
+        }
         else
-            moveByPositionBodyFrame(&nextPos);
+        {
+            //moveByPositionBodyFrame(&nextPos);
+            moveBySpeedBodyFrame(&nextPos);
+        }
         if(plp->abortMission)
         {
             break;
@@ -322,7 +329,8 @@ void DJIonboardSDK::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
 int DJIonboardSDK::moveByYawRate(float32_t yawDesired, float32_t zDesired, int timeoutInMs, float yawThresholdIndeg, float posDesiredInCm)
 {
     uint8_t flag=0x99;
-    double yawRateRad=35*DEG2RAD;
+    double yawRateRad=40*DEG2RAD;
+    double MinRateRad = 5*DEG2RAD;
     double yawDesiredRad=yawDesired*DEG2RAD;
     double yawThresholdInRad=yawThresholdIndeg*DEG2RAD;
     double curYawInRad=Flight::toEulerAngle(api->getBroadcastData().q).yaw;
@@ -367,19 +375,101 @@ int DJIonboardSDK::moveByYawRate(float32_t yawDesired, float32_t zDesired, int t
 
       //See how much farther we have to go
       //See if we need to modify the setpoint
-      if(fabs(yawRemaining)<10*DEG2RAD)
-          yawRateRad=5*DEG2RAD;
-      else if(fabs(yawRemaining)<20*DEG2RAD)
-          yawRateRad=10*DEG2RAD;
-      else if(fabs(yawRemaining)<40*DEG2RAD)
-          yawRateRad=20*DEG2RAD;
-      /*else if(fabs(yawRemaining)<5*DEG2RAD)
-          yawRateRad=2*DEG2RAD;*/
-      if (fabs(yawRemaining) > yawRateRad)
-          yawCmd = yawRateRad;
+      if(fabs(yawRemaining)<yawRateRad)
+          yawRateRad *= 0.75;
+      if(yawRateRad<MinRateRad)
+          yawRateRad=MinRateRad;
+      if((yawDesiredRad*curYawInRad)<0&&(fabs(yawDesiredRad)+fabs(curYawInRad))>(180*DEG2RAD)){
+          yawRemaining=curYawInRad-yawDesiredRad;
+      }
+      else
+          yawRemaining=yawDesiredRad-curYawInRad;
+      if(yawRemaining>0)
+          yawCmd = yawRemaining > yawRateRad ? yawRateRad : yawRemaining;
+      else if(yawRemaining<0)
+          yawCmd = yawRemaining > -1*yawRateRad ? yawRemaining : -1*yawRateRad;
     }
     return 1;
 }
+
+int DJIonboardSDK::moveBySpeedBodyFrame(PositionData* targetPosition, int timeoutInMs, float yawThresholdInDeg, float posThresholdInCm)
+{
+    uint8_t flag=0x52;//body frame, speed control
+    // Get current poition
+    PositionData curPosition = api->getBroadcastData().pos;
+    DJI::Vector3dData curLocalOffset;
+    DJI::EulerAngle curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
+
+    //Convert position offset from first position to local coordinates
+    localOffsetFromGpsOffset(curLocalOffset, targetPosition, &curPosition);
+
+    //Conversions
+    double yawThresholdInRad = DEG2RAD*yawThresholdInDeg;
+    float32_t posThresholdInM = posThresholdInCm/100;
+
+    int elapsedTime = 0;
+    float speedFactor = MAXSPEED;
+    float MinSpeed = 0.1;
+    Angle radOffset=0;
+    double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
+    double zCmd=targetPosition->height;
+    radOffset=RAD2DEG*atan2(fabs(curLocalOffset.y),fabs(curLocalOffset.x));
+    if(curLocalOffset.x<0&&curLocalOffset.y<0)
+        radOffset=-180.0+radOffset;
+    else if(curLocalOffset.x>0&&curLocalOffset.y<0)
+        radOffset=-radOffset;
+    else if(curLocalOffset.x<0&&curLocalOffset.y>0)
+        radOffset=180-radOffset;
+    if(std::abs(curEuler.yaw - radOffset) > yawThresholdInRad)
+    {
+        int cnt=40;
+        //Run multiple times to fix the influence of the inertia
+        while(cnt--)
+        {
+            moveByYawRate(radOffset,curPosition.height);
+        }
+    }
+    while(std::abs(curLocalOffset.x) > posThresholdInM || std::abs(curLocalOffset.y) > posThresholdInM || std::abs(curLocalOffset.z) > posThresholdInM)
+    {
+      // Check timeout
+      if (elapsedTime >= timeoutInMs)
+      {
+          break;
+      }
+      if(plp->abortMission)
+      {
+          break;
+      }
+      //MovementControl API call
+      flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
+      sleepmSec(20);
+      elapsedTime += 20;
+      //Get current position in required coordinates and units
+      curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
+      curPosition = api->getBroadcastData().pos;
+      localOffsetFromGpsOffset(curLocalOffset, targetPosition, &curPosition);
+
+      radOffset=RAD2DEG*atan2(fabs(curLocalOffset.y),fabs(curLocalOffset.x));
+      if(curLocalOffset.x<0&&curLocalOffset.y<0)
+          radOffset=-180.0+radOffset;
+      else if(curLocalOffset.x>0&&curLocalOffset.y<0)
+          radOffset=-radOffset;
+      else if(curLocalOffset.x<0&&curLocalOffset.y>0)
+          radOffset=180-radOffset;
+      xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
+      zCmd=targetPosition->height;
+      if(xCmd<3*speedFactor)
+      {
+          speedFactor *= 0.75;
+      }
+      if(speedFactor<MinSpeed)
+          speedFactor=MinSpeed;
+      if (xCmd > speedFactor)
+        xCmd = speedFactor;
+    }
+    return 1;
+}
+
 int DJIonboardSDK::moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs, float yawThresholdInDeg, float posThresholdInCm)
 {
     uint8_t flag=0x93;//body frame, position control
@@ -396,20 +486,11 @@ int DJIonboardSDK::moveByPositionBodyFrame(PositionData* targetPosition,int time
     float32_t posThresholdInM = posThresholdInCm/100;
 
     int elapsedTime = 0;
-    float speedFactor = 1.5;
+    float speedFactor = MAXSPEED;
+    float MinSpeed = 0.1;
     Angle radOffset=0;
     double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
     double zCmd=targetPosition->height;
-    /*if(std::abs(curLocalOffset.x)<10e-6)
-    {
-        if(curLocalOffset.y>0)
-            radOffset=90.0*DEG2RAD;
-        else if(curLocalOffset.y<0)
-            radOffset=-90.0*DEG2RAD;
-        else
-            radOffset=0;
-    }
-    else*/
     radOffset=RAD2DEG*atan2(fabs(curLocalOffset.y),fabs(curLocalOffset.x));
     if(curLocalOffset.x<0&&curLocalOffset.y<0)
         radOffset=-180.0+radOffset;
@@ -426,15 +507,8 @@ int DJIonboardSDK::moveByPositionBodyFrame(PositionData* targetPosition,int time
             moveByYawRate(radOffset,curPosition.height);
         }
     }
-    /*! Calculate the inputs to send the position controller. We implement basic
-        receding setpoint position control and the setpoint is always 1 m away
-        from the current position - until we get within a threshold of the goal.
-        From that point on, we send the remaining distance as the setpoint.
-    !*/
     if (xCmd > speedFactor)
       xCmd = speedFactor;
-
-    //! Main closed-loop receding setpoint position control
     while(std::abs(curLocalOffset.x) > posThresholdInM || std::abs(curLocalOffset.y) > posThresholdInM || std::abs(curLocalOffset.z) > posThresholdInM)
     {
       // Check timeout
@@ -449,23 +523,12 @@ int DJIonboardSDK::moveByPositionBodyFrame(PositionData* targetPosition,int time
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
       sleepmSec(20);
-
       elapsedTime += 20;
-
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
       localOffsetFromGpsOffset(curLocalOffset, targetPosition, &curPosition);
-      /*if(std::abs(curLocalOffset.x)<10e-6)
-      {
-          if(curLocalOffset.y>0)
-              radOffset=90.0*DEG2RAD;
-          else if(curLocalOffset.y<0)
-              radOffset=-90.0*DEG2RAD;
-          else
-              radOffset=0;
-      }
-      else*/
+
       radOffset=RAD2DEG*atan2(fabs(curLocalOffset.y),fabs(curLocalOffset.x));
       if(curLocalOffset.x<0&&curLocalOffset.y<0)
           radOffset=-180.0+radOffset;
@@ -473,13 +536,14 @@ int DJIonboardSDK::moveByPositionBodyFrame(PositionData* targetPosition,int time
           radOffset=-radOffset;
       else if(curLocalOffset.x<0&&curLocalOffset.y>0)
           radOffset=180-radOffset;
-
       xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
       zCmd=targetPosition->height;
-      if(xCmd<2)
-          speedFactor=0.5;
-      else if(xCmd<4)
-          speedFactor=1;
+      if(xCmd<2*speedFactor)
+      {
+          speedFactor *= 0.75;
+      }
+      if(speedFactor<MinSpeed)
+          speedFactor=MinSpeed;
       if (xCmd > speedFactor)
         xCmd = speedFactor;
     }

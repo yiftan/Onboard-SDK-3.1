@@ -26,6 +26,7 @@
 #define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM6"
 #define   ACTIVEPERIOD 1000
+#define   MAXSPEED 2
 using namespace DJI;
 using namespace DJI::onboardSDK;
 
@@ -88,9 +89,10 @@ class DJIonboardSDK : public QMainWindow
     void plpMission();
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
-                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=40.0);
-    int moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=35.0);
+                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
+    int moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
     int moveByYawRate(float32_t yawDesired, float32_t zDesired, int timeoutInMs=60000, float yawThresholdIndeg=0.5, float posDesiredInCm=10);
+    int moveBySpeedBodyFrame(PositionData* targetPosition, int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=35.0);
     void sleepmSec(int mSec);
 
   private slots:
