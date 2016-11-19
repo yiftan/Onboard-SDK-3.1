@@ -134,8 +134,11 @@ void DJIonboardSDK::initCamera()
 void DJIonboardSDK::initGPRS()
 {
     GPRSautoSend=new QTimer();
-    GPRSautoSend->setInterval(1000);
+    GPRSautoRead=new QTimer();
+    GPRSautoSend->setInterval(2000);
+    GPRSautoRead->setInterval(500);
     connect(GPRSautoSend,SIGNAL(timeout()), this, SLOT(on_tmr_GPRS_autosend()));
+    connect(GPRSautoRead,SIGNAL(timeout()), this, SLOT(on_tmr_GPRS_autoread()));
 }
 
 void DJIonboardSDK::functionAlloc()
@@ -506,21 +509,10 @@ void DJIonboardSDK::setBaudrate()
     driver->setBaudrate(baudrate);
 }
 
-void DJIonboardSDK::setGPRSBaudrate()
-{
-    int baudrate = ui->lineEdit_GPRSportBaudrate->text().toInt();
-    GPRSdriver->setBaudrate(baudrate);
-}
-
 void DJIonboardSDK::setPort()
 {
     port->setPortName(ui->comboBox_portName->currentText());
     //port->setPortName("COM4");
-}
-
-void DJIonboardSDK::setGPRSPort()
-{
-    GPRSport->setPortName("COM3");
 }
 
 void DJIonboardSDK::openPort()
@@ -532,15 +524,6 @@ void DJIonboardSDK::openPort()
         ui->btn_portOpen->setText(port->portName().append(" not exit"));
 }
 
-void DJIonboardSDK::openGPRSPort()
-{
-    GPRSdriver->init();
-    if(GPRSport->isOpen())
-        ui->btn_GPRSportOpen->setText(GPRSport->portName().append(" is open"));
-    else
-        ui->btn_GPRSportOpen->setText(GPRSport->portName().append(" not exit"));
-}
-
 void DJIonboardSDK::closePort()
 {
     port->close();
@@ -548,6 +531,27 @@ void DJIonboardSDK::closePort()
     {
         ui->btn_portOpen->setText(port->portName().append(" closed"));
     }
+}
+
+//GPRSPortSet
+void DJIonboardSDK::setGPRSBaudrate()
+{
+    int baudrate = ui->lineEdit_GPRSportBaudrate->text().toInt();
+    GPRSdriver->setBaudrate(baudrate);
+}
+
+void DJIonboardSDK::setGPRSPort()
+{
+    GPRSport->setPortName("COM3");
+}
+
+void DJIonboardSDK::openGPRSPort()
+{
+    GPRSdriver->init();
+    if(GPRSport->isOpen())
+        ui->btn_GPRSportOpen->setText(GPRSport->portName().append(" is open"));
+    else
+        ui->btn_GPRSportOpen->setText(GPRSport->portName().append(" not exit"));
 }
 
 void DJIonboardSDK::closeGPRSPort()
@@ -612,9 +616,10 @@ void DJIonboardSDK::GPRSPortCtl()
 {
     static int flag=0;
     static int err=0;
-    //QString head="Rev: ";
 
-    if(GPRSport->isOpen())
+    QString head="Revim: ";
+
+    if(GPRSport->isOpen()&&GPRSConnectflag==0)
     {
         if(flag<6)
         {
@@ -622,21 +627,267 @@ void DJIonboardSDK::GPRSPortCtl()
             if(GPRSBUF.contains("OK",Qt::CaseSensitive)&&GPRSBUF.contains(GPRSCommand[flag],Qt::CaseSensitive))
             {
                 flag++;
-                //ui->tb_GPRSDisplay->append(head.append(GPRSBUF));
+                ui->tb_GPRSDisplay->append(head.append(GPRSBUF));
                 GPRSBUF.clear();
                 err=0;
             }
         }
-        //if(GPRSBUF.contains("CONNECT OK")!=0)
+        if((GPRSBUF.contains("CONNECT OK",Qt::CaseSensitive)||GPRSBUF.contains("ALREADY CONNECT",Qt::CaseSensitive))&&flag==6)
+        {
+            GPRSConnectflag=1;
+            ui->lineEdit_GPRSres->setText("connect ok");
+            GPRSBUF.clear();
+        }
 
-        err++; ui->lineEdit_GPRSres->setText("connecting");
+        err++;
         if(err>1000)
         {
+            GPRSDataSend("AT+CIPCLOSE");
+            GPRSDataSend("AT+CIPSHUT");
             ui->lineEdit_GPRSres->setText("connect failed");
-            //flag=0;
+            flag=0;
         }
     }
 
+}
+
+//GPRS PROTOCOL COMMAND
+void DJIonboardSDK::GPRSProtocolRead()
+{
+    if(GPRSConnectflag==1&&GPRSBUF!=NULL)
+    //if(GPRSBUF!=NULL)
+    {
+        if(!(GPRSBUF.contains("SEND",Qt::CaseSensitive)&&GPRSBUF.contains("AT",Qt::CaseSensitive)))
+        {
+            char X=GPRSBUF[0].toLatin1();
+            for(int i=1;i<GPRSBUF.length();i++)
+            {
+                X^=GPRSBUF[i].toLatin1();
+            }
+            QStringList Protocol=GPRSBUF.split("=");
+            if(Protocol.length()>1)
+            {
+                ProtocolHead=Protocol[0];
+                char head=Protocol[1][0].toLatin1();
+                char tail=Protocol[Protocol.length()-1][0].toLatin1();
+                switch(head)
+                {
+                case 'P':
+                    ProtocolFlag.ProtocolType=1;
+                    if(tail==X&&Protocol.length()>2)
+                    {
+                        if(Protocol[1].length()==1||(Protocol[1].length()==2&&Protocol[1][1].toLatin1()!='Y'))
+                        {
+                             //GPRSProtocolSend_2
+                            ProtocolFlag.ProtocolSuccess=true;
+                        }
+                    }
+                    else
+                    {
+                        ProtocolFlag.ProtocolSuccess=false;
+                    }
+                    break;
+                case 'S':
+                    ProtocolFlag.ProtocolType=2;
+                    if(tail==X&&Protocol.length()>5)
+                    {
+
+                        FlightStatusSet.FlightSt=Protocol[2];
+                        FlightStatusSet.PID=Protocol[3];
+                        FlightStatusSet.SenserData=Protocol[4];
+                        ProtocolFlag.ProtocolSuccess=true;
+                    }
+                    else
+                    {
+                        ProtocolFlag.ProtocolSuccess=false;
+                    }
+                    break;
+                case 'D':
+                    ProtocolFlag.ProtocolType=3;
+                    //if(tail==X&&Protocol.length()>3)
+                    if(Protocol.length()>3)
+                    {
+                        FlightDirectSet.pointnumber=Protocol[2].toInt();
+                        FlightDirectSet.pointData=(struct point*)malloc(sizeof(PointInfo)*FlightDirectSet.pointnumber);
+                        for(int i=0;i<FlightDirectSet.pointnumber;i++)
+                        {
+                            QStringList DirectInfo=Protocol[3+i].split("|");
+                            FlightDirectSet.pointData[i].Lon=DirectInfo[0].toDouble();
+                            FlightDirectSet.pointData[i].Lan=DirectInfo[1].toDouble();
+                            FlightDirectSet.pointData[i].Height=DirectInfo[2].toDouble();
+                            //GPRSDataSend(QString::number(FlightDirectSet.pointData[i].Lon,'.',11));
+                        }
+                        GPRSProtocolSend_3('Y');
+                        ProtocolFlag.ProtocolSuccess=true;
+                    }
+                    else
+                    {
+                        GPRSProtocolSend_3('N');
+                        ProtocolFlag.ProtocolSuccess=false;
+                    }
+                    break;
+                case 'C':
+                    ProtocolFlag.ProtocolType=4;
+                    if(tail==X&&Protocol.length()>3)
+                    {
+                        CommandData=Protocol[2].toInt();
+                        ProtocolFlag.ProtocolSuccess=true;
+                    }
+                    else
+                    {
+                        ProtocolFlag.ProtocolSuccess=false;
+                    }
+                    break;
+                case 'E':
+                    ProtocolFlag.ProtocolType=5;
+                    if(tail==X&&Protocol.length()>2)
+                    {
+                        if(Protocol[1].length()==2&&Protocol[1][1].toLatin1()!='Y')
+                        {
+                             //GPRSProtocolSend_5
+                            ProtocolFlag.ProtocolSuccess=true;
+                        }
+                    }
+                    else
+                    {
+                        ProtocolFlag.ProtocolSuccess=false;
+                    }
+                    break;
+                default:
+                    ProtocolFlag.ProtocolType=0;
+                    ProtocolFlag.ProtocolSuccess=false;
+                    break;
+                }
+            }
+            Protocol.clear();
+            GPRSBUF.clear();
+        }
+    }
+}
+
+//发送心跳数据
+void DJIonboardSDK::GPRSProtocolSend_0(double Lon, double Lan, double height, double v, int status)
+{
+    char s=0x1a;
+
+    GPRSDataSend("AT+CIPSEND");
+    QString tmp="O=L="+QString::number(Lon,'.',11)+"="+QString::number(Lan,'.',12)+"="+\
+                QString::number(height,'.',2)+"="+QString::number(v,'.',1)+"="+\
+                QString::number(status,10)+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    GPRSDataSend(tmp);
+    GPRSDataSend(QString(s));
+}
+
+//发送飞行器状态信息
+void DJIonboardSDK::GPRSProtocolSend_1(QString Flight_status)
+{
+    char s=0x1a;
+
+    GPRSDataSend("AT+CIPSEND");
+    QString tmp=ProtocolHead+"=P="+Flight_status+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    GPRSDataSend(tmp);
+    GPRSDataSend(QString(s));
+}
+
+//发送状态设置回复
+void DJIonboardSDK::GPRSProtocolSend_2(char res)
+{
+    char s=0x1a;
+
+    GPRSDataSend("AT+CIPSEND");
+    QString tmp=ProtocolHead+"=S"+QString(res)+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    GPRSDataSend(tmp);
+    GPRSDataSend(QString(s));
+
+}
+
+//发送路径信息设置结果
+void DJIonboardSDK::GPRSProtocolSend_3(char res)
+{
+    char s=0x1a;
+
+    GPRSDataSend("AT+CIPSEND");
+    QString tmp=ProtocolHead+"=D"+QString(res)+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    GPRSDataSend(tmp);
+    GPRSDataSend(QString(s));
+
+}
+
+//发送飞行器控制命令回复
+void DJIonboardSDK::GPRSProtocolSend_4(int commandtype,char res)
+{
+    char s=0x1a;
+
+    GPRSDataSend("AT+CIPSEND");
+    QString tmp=ProtocolHead+"=C="+QString::number(commandtype,10)+"="+QString(res)+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    GPRSDataSend(tmp);
+    GPRSDataSend(QString(s));
+
+}
+
+//发送故障检测信息
+void DJIonboardSDK::GPRSProtocolSend_5(int ErrorNum, QString ErrorType,double Lon, double Lan)
+{
+    char s=0x1a;
+
+    GPRSDataSend("AT+CIPSEND");
+    QString tmp=ProtocolHead+"=E="+QString::number(ErrorNum,10)+"="+ErrorType+"="+\
+            QString::number(Lon,'.',11)+"="+QString::number(Lan,'.',12)+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    GPRSDataSend(tmp);
+    GPRSDataSend(QString(s));
+}
+
+void DJIonboardSDK::on_tmr_GPRS_autosend()
+{
+    GPRSPortCtl();
+}
+
+void DJIonboardSDK::on_tmr_GPRS_autoread()
+{
+    GPRSDataRead();
+    GPRSProtocolRead();
 }
 
 void DJIonboardSDK::on_btn_portOpen_clicked()
@@ -665,6 +916,7 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
         if(GPRSport->isOpen())
         {
             GPRSautoSend->stop();
+            GPRSautoRead->stop();
             closeGPRSPort();
         }
         else
@@ -673,6 +925,7 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
             setGPRSPort();
             openGPRSPort();
             GPRSautoSend->start();
+            GPRSautoRead->start();
 
             //ui->lineEdit_GPRSres->setText("connect ok");
         }
@@ -680,19 +933,12 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
 
 }
 
-void DJIonboardSDK::on_tmr_GPRS_autosend()
-{
-    GPRSPortCtl();
-    GPRSDataRead();
-}
-
 void DJIonboardSDK::on_btn_GPRSportSend_clicked()
 {
     //GPRSPortCtl();
-
-    GPRSDATA=ui->lineEdit_GPRSsend->text();
-    GPRSDataSend(GPRSDATA);
-
+    //GPRSDATA=ui->lineEdit_GPRSsend->text();
+    //GPRSDataSend(GPRSDATA);
+    GPRSProtocolSend_0(120.13143165691,30.272977524721,20.12,1.0,1);
 }
 
 void DJIonboardSDK::on_btn_GPRSportRead_clicked()

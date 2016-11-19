@@ -52,6 +52,14 @@ class DJIonboardSDK : public QMainWindow
     void GPRSPortCtl();
     void GPRSDataRead();
     void GPRSDataSend(QString GPRSDATA);
+    //GPRS PROTOCOL COMMAND
+    void GPRSProtocolRead();
+    void GPRSProtocolSend_0(double Lon,double Lan,double height,double v,int status);
+    void GPRSProtocolSend_1(QString Flight_status);
+    void GPRSProtocolSend_2(char res);
+    void GPRSProtocolSend_3(char res);
+    void GPRSProtocolSend_4(int commandtype,char res);
+    void GPRSProtocolSend_5(int ErrorNum, QString ErrorType,double Lon, double Lan);
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -248,6 +256,7 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_rtk_read_clicked();
 
     void on_tmr_GPRS_autosend();
+    void on_tmr_GPRS_autoread();
 
     //! @todo sort
 
@@ -296,21 +305,44 @@ private:
 
     CoreAPI *api;
     QtOnboardsdkPortDriver *driver;
-    QtOnboardsdkPortDriver *GPRSdriver;
     QSerialPort *port;
+
+    //GPRS
+    QtOnboardsdkPortDriver *GPRSdriver;
     QSerialPort *GPRSport;
     QByteArray *key;
     QString GPRSBUF;
-    QString GPRSDATA;
     QString GPRSCommand[6]={
         "AT+CGCLASS=\"B\"",
         "AT+CGDCONT=1,\"IP\",\"CMNET\"",
         "AT+CGATT=1",
         "AT+CIPCSGP=1,\"CMNET\"",
         "AT+CLPORT=\"TCP\",\"2000\"",
-        "AT+CIPSTART=\"TCP\",\"115.230.108.240\",\"9876\""
+        "AT+CIPSTART=\"TCP\",\"115.230.96.249\",\"9876\""
     };
     QTimer *GPRSautoSend;
+    QTimer *GPRSautoRead;
+    int GPRSConnectflag=0;
+    QString ProtocolHead;
+    struct ProtocolRev{
+        int ProtocolType;
+        bool ProtocolSuccess;
+    }ProtocolFlag{0,false};
+    struct FlightStaSet{
+        QString FlightSt;
+        QString PID;
+        QString SenserData;
+    }FlightStatusSet;
+    struct point{
+        double Lon;
+        double Lan;
+        double Height;
+    }PointInfo;
+    struct FlightDirSet{
+        int pointnumber;
+        struct point *pointData;
+    }FlightDirectSet;
+    int CommandData;
 
     Flight *flight;
     uint8_t flightFlag;
