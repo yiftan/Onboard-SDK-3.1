@@ -2394,4 +2394,3 @@ void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
     plpMission();
 }
 
-
