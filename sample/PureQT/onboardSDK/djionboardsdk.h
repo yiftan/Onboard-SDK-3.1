@@ -102,7 +102,6 @@ class DJIonboardSDK : public QMainWindow
     void initDisplay();
     void initWayPoint();
     void initVirtualRC();
-    void sleepmSec(int mSec);
     void initGPRS();
     void plpMission();
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
