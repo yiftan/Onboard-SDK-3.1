@@ -47,10 +47,25 @@ class DJIonboardSDK : public QMainWindow
 
   private:
     void setBaudrate();
+    void setGPRSBaudrate();
     void setPort();
+    void setGPRSPort();
     void openPort();
+    void openGPRSPort();
     void closePort();
+    void closeGPRSPort();
     void refreshPort();
+    void GPRSPortCtl();
+    void GPRSDataRead();
+    void GPRSDataSend(QString GPRSDATA);
+    //GPRS PROTOCOL COMMAND
+    void GPRSProtocolRead();
+    void GPRSProtocolSend_0(double Lon,double Lan,double height,double v,int status);
+    void GPRSProtocolSend_1(QString Flight_status);
+    void GPRSProtocolSend_2(char res);
+    void GPRSProtocolSend_3(char res);
+    void GPRSProtocolSend_4(int commandtype,char res);
+    void GPRSProtocolSend_5(int ErrorNum, QString ErrorType,double Lon, double Lan);
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -87,6 +102,8 @@ class DJIonboardSDK : public QMainWindow
     void initDisplay();
     void initWayPoint();
     void initVirtualRC();
+    void sleepmSec(int mSec);
+    void initGPRS();
     void plpMission();
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
@@ -252,6 +269,9 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_gps_read_clicked();
     void on_btn_rtk_read_clicked();
 
+    void on_tmr_GPRS_autosend();
+    void on_tmr_GPRS_autoread();
+
     //! @todo sort
 
     void on_btn_webTool_clicked(bool checked);
@@ -265,6 +285,14 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_plp_start_stop_clicked(bool checked);
 
     void on_btn_Abortplp_clicked();
+	
+    void on_btn_GPRSportOpen_clicked();
+
+    void on_btn_GPRSportSend_clicked();
+
+    void on_btn_GPRSportRead_clicked();
+
+    void on_btn_GPRSportClear_clicked();
 
 private:
 #ifdef GROUNDSTATION
@@ -286,7 +314,43 @@ private:
     CoreAPI *api;
     QtOnboardsdkPortDriver *driver;
     QSerialPort *port;
+
+    //GPRS
+    QtOnboardsdkPortDriver *GPRSdriver;
+    QSerialPort *GPRSport;
     QByteArray *key;
+    QString GPRSBUF;
+    QString GPRSCommand[6]={
+        "AT+CGCLASS=\"B\"",
+        "AT+CGDCONT=1,\"IP\",\"CMNET\"",
+        "AT+CGATT=1",
+        "AT+CIPCSGP=1,\"CMNET\"",
+        "AT+CLPORT=\"TCP\",\"2000\"",
+        "AT+CIPSTART=\"TCP\",\"115.230.104.1\",\"9876\""
+    };
+    QTimer *GPRSautoSend;
+    QTimer *GPRSautoRead;
+    int GPRSConnectflag=0;
+    QString ProtocolHead;
+    struct ProtocolRev{
+        int ProtocolType;
+        bool ProtocolSuccess;
+    }ProtocolFlag{0,false};
+    struct FlightStaSet{
+        QString FlightSt;
+        QString PID;
+        QString SenserData;
+    }FlightStatusSet;
+    struct point{
+        double Lon;
+        double Lan;
+        double Height;
+    };
+    struct FlightDirSet{
+        int pointnumber;
+        struct point *pointData;
+    }FlightDirectSet;
+    int CommandData;
 
     Flight *flight;
     uint8_t flightFlag;

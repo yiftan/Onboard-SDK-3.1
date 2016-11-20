@@ -69,6 +69,30 @@ size_t QtOnboardsdkPortDriver::send(const uint8_t *buf, size_t len)
     return sent;
 }
 
+size_t QtOnboardsdkPortDriver::charsend(const char *buf, size_t len)
+{
+    sendLock.lock();
+    size_t sent = 0;
+    if (port != 0)
+    {
+        if (port->isOpen())
+            while (sent != len)
+            {
+                sent += port->write(buf + sent, len);
+                port->waitForBytesWritten(2);
+            }
+        sendLock.unlock();
+        return sent;
+    }
+    else
+    {
+        sendLock.unlock();
+        return 0;
+    }
+    sendLock.unlock();
+    return sent;
+}
+
 size_t QtOnboardsdkPortDriver::readall(uint8_t *buf, size_t maxlen)
 {
     size_t ans = 0;
@@ -77,6 +101,18 @@ size_t QtOnboardsdkPortDriver::readall(uint8_t *buf, size_t maxlen)
         if (port->isOpen())
             if (port->bytesAvailable() > 0)
                 ans = port->read((char *)buf, maxlen);
+    }
+    return ans;
+}
+
+size_t QtOnboardsdkPortDriver::charreadall(char *buf, size_t maxlen)
+{
+    size_t ans = 0;
+    if (port != 0)
+    {
+        if (port->isOpen())
+            if (port->bytesAvailable() > 0)
+                ans = port->read(buf, maxlen);
     }
     return ans;
 }
