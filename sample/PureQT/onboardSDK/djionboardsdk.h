@@ -25,6 +25,7 @@
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM6"
+#define   GPRSCOM "COM3"
 #define   ACTIVEPERIOD 1000
 #define   MAXSPEED 2
 using namespace DJI;
@@ -94,11 +95,12 @@ class DJIonboardSDK : public QMainWindow
     int moveByYawRate(float32_t yawDesired, float32_t zDesired, int timeoutInMs=60000, float yawThresholdIndeg=0.5, float posDesiredInCm=10);
     int moveBySpeedBodyFrame(PositionData* targetPosition, int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=35.0);
     void sleepmSec(int mSec);
+    void mouseClicked(QWidget* wid);
 
   private slots:
     //! @note too much slots, tired to rename.
-    void autoActivate();
-
+    void autoActivateSDK();
+    void autoActivateGPRS();
     void on_btn_portRefresh_clicked();
     void on_btn_portOpen_clicked();
     void on_comboBox_portName_currentIndexChanged(int index);
@@ -314,11 +316,17 @@ private:
 
     QTimer *timerBroadcast;
 
-    QTimer *activateTimer;
+    QTimer *activateSDKTimer;
+
+    QTimer *activateGPRSTimer;
+
+    QTimer *plpTimer;
 
     WayPointData wayPointDataTmp;
 
     PowerLinePatrol *plp;
+
+    QStringList ports;
 
 
 

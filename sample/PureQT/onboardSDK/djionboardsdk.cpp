@@ -5,7 +5,7 @@
 #include <QMessageBox>
 #include <QTime>
 #include <QDir>
-
+#include <QMouseEvent>
 #include <QScrollBar>
 #include <iostream>
 #include <fstream>
@@ -221,27 +221,20 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     devLayout->addWidget(dev);
     ui->tbDev->setLayout(devLayout);
 #endif // SDK_DEV
-    activateTimer = new QTimer();
-    activateTimer->setInterval(ACTIVEPERIOD);
-    connect(activateTimer, SIGNAL(timeout()), this, SLOT(autoActivate()));
-    activateTimer->start();
+
+    activateSDKTimer = new QTimer();
+    activateSDKTimer->setInterval(ACTIVEPERIOD);
+    connect(activateSDKTimer, SIGNAL(timeout()), this, SLOT(autoActivateSDK()));
+    activateGPRSTimer = new QTimer();
+    activateGPRSTimer->setInterval(ACTIVEPERIOD-100);
+    connect(activateGPRSTimer, SIGNAL(timeout()), this, SLOT(autoActivateGPRS()));
+    activateSDKTimer->start();
+    activateGPRSTimer->start();
 }
 
 DJIonboardSDK::~DJIonboardSDK()
 {
     delete ui;
-}
-
-void DJIonboardSDK::refreshPort()
-{
-    ui->comboBox_portName->clear();
-    QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
-    QStringList list;
-    for (int i = 0; i < ports.length(); ++i)
-    {
-        list.append(ports[i].portName());
-    }
-    ui->comboBox_portName->addItems(list);
 }
 
 void DJIonboardSDK::closeEvent(QCloseEvent *)
@@ -272,6 +265,17 @@ void DJIonboardSDK::sleepmSec(int mSec)
     QTime dieTime = QTime::currentTime().addMSecs(mSec);
     while( QTime::currentTime() <dieTime )
         QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+}
+void DJIonboardSDK::mouseClicked(QWidget* wid)
+{
+    QPoint pos=wid->pos();
+    QMouseEvent *mEvnPress;
+    QMouseEvent *mEvnRelease;
+    wid->setFocus();
+    mEvnPress = new QMouseEvent(QEvent::MouseButtonPress, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(QWidget::focusWidget(),mEvnPress);
+    mEvnRelease = new QMouseEvent(QEvent::MouseButtonRelease, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(QWidget::focusWidget(),mEvnRelease);
 }
 
 void DJIonboardSDK::plpMission()
@@ -743,6 +747,24 @@ void DJIonboardSDK::on_btn_portRefresh_clicked()
     refreshPort();
 }
 
+void DJIonboardSDK::refreshPort()
+{
+    /*i->comboBox_portName->clear();
+    QList<QSerialPortInfo> ports = QSerialPortInfo::availablePorts();
+    QStringList list;
+    for (int i = 0; i < ports.length(); ++i)
+    {
+        list.append(ports[i].portName());
+    }
+    ui->comboBox_portName->addItems(list);*/
+    QList<QSerialPortInfo> portsInfo = QSerialPortInfo::availablePorts();
+    ports.clear();
+    for (int i = 0; i < portsInfo.length(); ++i)
+    {
+        ports.append(portsInfo[i].portName());
+    }
+}
+
 void DJIonboardSDK::setBaudrate()
 {
     int baudrate = ui->lineEdit_portBaudrate->text().toInt();
@@ -751,7 +773,8 @@ void DJIonboardSDK::setBaudrate()
 
 void DJIonboardSDK::setPort()
 {
-    port->setPortName(ui->comboBox_portName->currentText());
+    //port->setPortName(ui->comboBox_portName->currentText());
+    port->setPortName(SDKCOM);
 }
 
 void DJIonboardSDK::openPort()
@@ -1425,12 +1448,9 @@ void DJIonboardSDK::on_tmr_Broadcast()
     uint32_t curtime=api->getTime().time;
     uint32_t timeinterval=curtime-origintime;
     origintime=curtime;
-    if(timeinterval==0&&activateTimer==NULL)
+    if(timeinterval==0&&!activateSDKTimer->isActive())
     {
-        activateTimer = new QTimer();
-        activateTimer->setInterval(ACTIVEPERIOD);
-        connect(activateTimer, SIGNAL(timeout()), this, SLOT(autoActivate()));
-        activateTimer->start();
+        activateSDKTimer->start();
     }
     qDebug()<<Flight::toEulerAngle(api->getBroadcastData().q).yaw*RAD2DEG;
 
@@ -2224,7 +2244,13 @@ void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
     }
 }
 
-void DJIonboardSDK::autoActivate()
+void DJIonboardSDK::autoActivateGPRS()
+{
+
+    activateGPRSTimer->stop();
+}
+
+void DJIonboardSDK::autoActivateSDK()
 {
     static int cnt=0,origintime=0,cntin=0;
     int curtime=api->getTime().time;
@@ -2234,13 +2260,17 @@ void DJIonboardSDK::autoActivate()
         plp->isObtainControl=false;
         if(!port->isOpen()){
             on_btn_portRefresh_clicked();
-            int findindex=-1;
+            /*int findindex=-1;
             findindex=ui->comboBox_portName->findText(SDKCOM);
-            if(findindex!=-1)
+            if(findindex!=-1)*/
+            if(ports.contains(SDKCOM))
             {
-                ui->comboBox_portName->setCurrentIndex(findindex);
+                //ui->comboBox_portName->setCurrentIndex(findindex);
+                setPort();
                 on_btn_portOpen_clicked();
             }
+            else
+                ui->btn_portOpen->setText(port->portName().append(" not exit"));
         }
         else
         {
@@ -2319,9 +2349,7 @@ void DJIonboardSDK::autoActivate()
             else if(ui->btn_coreSetControl->text() == "Release Control")
             {
                 plp->isObtainControl=true;
-                activateTimer->stop();
-                delete activateTimer;
-                activateTimer=NULL;
+                activateSDKTimer->stop();
                 cnt=0;
                 cntin=-1;
             }
