@@ -311,7 +311,7 @@ private:
         "AT+CGATT=1",
         "AT+CIPCSGP=1,\"CMNET\"",
         "AT+CLPORT=\"TCP\",\"2000\"",
-        "AT+CIPSTART=\"TCP\",\"115.230.96.249\",\"9876\""
+        "AT+CIPSTART=\"TCP\",\"115.230.104.1\",\"9876\""
     };
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
@@ -330,7 +330,7 @@ private:
         double Lon;
         double Lan;
         double Height;
-    }PointInfo;
+    };
     struct FlightDirSet{
         int pointnumber;
         struct point *pointData;
