@@ -96,6 +96,7 @@ class DJIonboardSDK : public QMainWindow
     void initDisplay();
     void initWayPoint();
     void initVirtualRC();
+    void sleepmSec(int mSec);
     void initGPRS();
     void plpMission();
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,PositionData* target, PositionData* origin);
@@ -271,14 +272,6 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_plp_start_stop_clicked(bool checked);
 
     void on_btn_GPRSportOpen_clicked();
-
-    void on_tbgprs_windowTitleChanged(const QString &title);
-
-    void on_tbgprs_objectNameChanged(const QString &objectName);
-
-    void on_tbFlight_destroyed();
-
-    void on_lineEdit_GPRSportBaudrate_textEdited(const QString &arg1);
 
     void on_btn_GPRSportSend_clicked();
 
