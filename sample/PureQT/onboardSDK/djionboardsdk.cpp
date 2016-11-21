@@ -174,6 +174,8 @@ void DJIonboardSDK::functionAlloc()
 
 DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::DJIonboardSDK)
 {
+    CommandData=0;
+    setspeed=2.0;
     ui->setupUi(this);
 
     ui->btn_flightCheckStatus->setVisible(false);
@@ -295,18 +297,29 @@ void DJIonboardSDK::mouseClicked(QWidget* wid)
 }
 void DJIonboardSDK::plpMissionCheck()
 {
-    int ctrlData=1;
-    switch(ctrlData){
-    case 0: ui->radioButton_4->setChecked(true);//Take off
-            mouseClicked(ui->btn_flight_runTask);
-            break;
-    case 1: ui->radioButton_7->setChecked(true);//Landing
-            mouseClicked(ui->btn_flight_runTask);
-            break;
-    case 2: ui->radioButton_8->setChecked(true);//Go home
-            mouseClicked(ui->btn_flight_runTask);
-            break;
-    case 3: mouseClicked(ui->btn_plp_start_stop);
+    switch(CommandData){
+        case 1: ui->radioButton_4->setChecked(true);//Take off
+                mouseClicked(ui->btn_flight_runTask);
+                break;
+        case 2: mouseClicked(ui->btn_plp_start_stop);//Start mission
+                break;
+        case 3: mouseClicked(ui->btn_Abortplp);//Abort mission
+                break;
+        case 4: ui->radioButton_7->setChecked(true);//Landing
+                mouseClicked(ui->btn_flight_runTask);
+                break;
+        case 5: ui->radioButton_8->setChecked(true);//Go home
+                mouseClicked(ui->btn_flight_runTask);
+                break;
+        default: break;
+    }
+    if(CommandData)
+        CommandData=0;
+    if(ProtocolFlag.ProtocolSuccess)
+    {
+        plp->isUsingGPRSData=true;
+        mouseClicked(ui->btn_plp_loadAll);
+        ProtocolFlag.ProtocolSuccess=false;
     }
 }
 
@@ -444,7 +457,7 @@ int DJIonboardSDK::moveBySpeedBodyFrame(PositionData* targetPosition, int timeou
     float32_t posThresholdInM = posThresholdInCm/100;
 
     int elapsedTime = 0;
-    float speedFactor = MAXSPEED;
+    float speedFactor = setspeed;
     float MinSpeed = 0.1;
     Angle radOffset=0;
     double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
@@ -522,7 +535,7 @@ int DJIonboardSDK::moveByPositionBodyFrame(PositionData* targetPosition,int time
     float32_t posThresholdInM = posThresholdInCm/100;
 
     int elapsedTime = 0;
-    float speedFactor = MAXSPEED;
+    float speedFactor = setspeed;
     float MinSpeed = 0.1;
     Angle radOffset=0;
     double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
@@ -947,10 +960,10 @@ void DJIonboardSDK::GPRSPortCtl()
             flag=0;
         }
     }
-    else
+    /*else
     {
        GPRSautoSend->stop();
-    }
+    }*/
 }
 
 //GPRS PROTOCOL COMMAND
@@ -1237,7 +1250,7 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
     {
         if(GPRSport->isOpen())
         {
-            GPRSautoSend->stop();
+            //GPRSautoSend->stop();
             GPRSautoRead->stop();
             closeGPRSPort();
         }
@@ -1246,7 +1259,7 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
             setGPRSPort();
             setGPRSBaudrate();
             openGPRSPort();
-            GPRSautoSend->start();
+            //GPRSautoSend->start();
             GPRSautoRead->start();
 
             //ui->lineEdit_GPRSres->setText("connect ok");
@@ -2239,22 +2252,49 @@ void DJIonboardSDK::on_tmr_follow_send()
 
 void DJIonboardSDK::wpAddPoint()
 {
-    int number = waypointData->rowCount();
-    waypointData->setItem(number, 0, new QStandardItem(QString::number(number)));
-    waypointData->setItem(number, 1,
-                          new QStandardItem(QString::number(flight->getPosition().latitude/DEG2RAD,'g',11)));
-    waypointData->setItem(number, 2,
-                          new QStandardItem(QString::number(flight->getPosition().longitude/DEG2RAD,'g',11)));
-    waypointData->setItem(number, 3,
-                          new QStandardItem(QString::number(flight->getPosition().altitude,'g',11)));
-    waypointData->setItem(number, 4, new QStandardItem("not available now"));
-    waypointData->setItem(number, 5, new QStandardItem("0"));
-    waypointData->setItem(number, 6, new QStandardItem("0"));
-    waypointData->setItem(number, 7, new QStandardItem("Clockwise"));
-    waypointData->setItem(number, 8, new QStandardItem("0"));
+    if(FlightDirectSet.pointnumber&&plp->isUsingGPRSData)
+    {
+        actionData.clear();
+        ui->cb_waypoint_point->clear();
+        waypointData->clear();
+        for(int number = 0;number<FlightDirectSet.pointnumber;number++)
+        {
+            waypointData->setItem(number, 0, new QStandardItem(QString::number(number)));
+            waypointData->setItem(number, 1,
+                                  new QStandardItem(QString::number(FlightDirectSet.pointData[number].Lon,'g',11)));
+            waypointData->setItem(number, 2,
+                                  new QStandardItem(QString::number(FlightDirectSet.pointData[number].Lan,'g',11)));
+            waypointData->setItem(number, 3,
+                                  new QStandardItem(QString::number(FlightDirectSet.pointData[number].Height,'g',11)));
+            waypointData->setItem(number, 4, new QStandardItem("not available now"));
+            waypointData->setItem(number, 5, new QStandardItem("0"));
+            waypointData->setItem(number, 6, new QStandardItem("0"));
+            waypointData->setItem(number, 7, new QStandardItem("Clockwise"));
+            waypointData->setItem(number, 8, new QStandardItem("0"));
 
-    actionData.append(initAction());
-    ui->cb_waypoint_point->addItem(QString::number(ui->cb_waypoint_point->count() - 1));
+            actionData.append(initAction());
+            ui->cb_waypoint_point->addItem(QString::number(ui->cb_waypoint_point->count() - 1));
+        }
+    }
+    else
+    {
+        int number = waypointData->rowCount();
+        waypointData->setItem(number, 0, new QStandardItem(QString::number(number)));
+        waypointData->setItem(number, 1,
+                              new QStandardItem(QString::number(flight->getPosition().latitude/DEG2RAD,'g',11)));
+        waypointData->setItem(number, 2,
+                              new QStandardItem(QString::number(flight->getPosition().longitude/DEG2RAD,'g',11)));
+        waypointData->setItem(number, 3,
+                              new QStandardItem(QString::number(flight->getPosition().altitude,'g',11)));
+        waypointData->setItem(number, 4, new QStandardItem("not available now"));
+        waypointData->setItem(number, 5, new QStandardItem("0"));
+        waypointData->setItem(number, 6, new QStandardItem("0"));
+        waypointData->setItem(number, 7, new QStandardItem("Clockwise"));
+        waypointData->setItem(number, 8, new QStandardItem("0"));
+
+        actionData.append(initAction());
+        ui->cb_waypoint_point->addItem(QString::number(ui->cb_waypoint_point->count() - 1));
+    }
 }
 
 void DJIonboardSDK::on_btn_waypoint_init_clicked()
@@ -2435,6 +2475,7 @@ void DJIonboardSDK::on_btn_waypoint_remove_clicked()
 {
     wpRemovePoint();
     ui->le_waypoint_number->setText(QString::number(waypointData->rowCount()));
+    plp->isUsingGPRSData=false;
 }
 
 void DJIonboardSDK::on_btn_wp_pr_clicked(bool checked)
@@ -2682,6 +2723,11 @@ void DJIonboardSDK::on_btn_plp_init_clicked()
 
 void DJIonboardSDK::on_btn_plp_loadAll_clicked()
 {
+    if(FlightDirectSet.pointnumber&&plp->isUsingGPRSData)
+    {
+        on_btn_waypoint_add_clicked();
+        plp->Missionclicked=false;
+    }
     if(plp->Missionclicked==false)
         on_btn_plp_init_clicked();
     for (int i = 0; i < ui->cb_waypoint_point->count() - 1; ++i)

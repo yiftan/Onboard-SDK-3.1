@@ -27,7 +27,6 @@
 #define   SDKCOM  "COM6"
 #define   GPRSCOM "COM3"
 #define   ACTIVEPERIOD 1000
-#define   MAXSPEED 2
 using namespace DJI;
 using namespace DJI::onboardSDK;
 
@@ -392,6 +391,8 @@ private:
     PowerLinePatrol *plp;
 
     QStringList ports;
+
+    float *setspeed;
 
 
 

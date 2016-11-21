@@ -28,6 +28,7 @@ public:
     bool isLoadWayPoint;
     bool isTurnOff;
     bool isLanding;
+    bool isUsingGPRSData;
 private:
     WayPointInitData info;
     WayPointData *index;

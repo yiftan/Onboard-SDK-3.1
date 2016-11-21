@@ -10,6 +10,7 @@ PowerLinePatrol::PowerLinePatrol()
     isLoadWayPoint=false;
     isTurnOff=false;
     isLanding=true;
+    isUsingGPRSData=false;
 }
 void PowerLinePatrol::init(WayPointInitData *Info)
 {
