@@ -175,6 +175,10 @@ void DJIonboardSDK::functionAlloc()
 DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::DJIonboardSDK)
 {
     CommandData=0;
+    for(int i=0;i<5;i++){
+        ProtocolFlag[i]=false;
+    }
+    GPRSConnectflag=0;
     setspeed=2.0;
     ui->setupUi(this);
 
@@ -315,11 +319,11 @@ void DJIonboardSDK::plpMissionCheck()
     }
     if(CommandData)
         CommandData=0;
-    if(ProtocolFlag.ProtocolSuccess)
+    if(ProtocolFlag[2])
     {
         plp->isUsingGPRSData=true;
         mouseClicked(ui->btn_plp_loadAll);
-        ProtocolFlag.ProtocolSuccess=false;
+        ProtocolFlag[2]=false;
     }
 }
 

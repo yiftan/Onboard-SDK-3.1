@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.0.2, 2016-11-21T15:30:36. -->
+<!-- Written by QtCreator 4.0.2, 2016-11-21T15:34:33. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
-  <value type="QByteArray">{7ba1f67d-d727-426e-85ce-f7fa3eb31047}</value>
+  <value type="QByteArray">{7d8576ce-8b76-4b84-b600-35747f4faed5}</value>
  </data>
  <data>
   <variable>ProjectExplorer.Project.ActiveTarget</variable>
@@ -287,8 +287,8 @@
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">onboardSDK</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:C:/Users/qxy/Desktop/DJI/Onboard-SDK-3.1/sample/PureQT/onboardSDK/onboardSDK.pro</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">onboardSDK2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:F:/GIT_project/Onboard-SDK-3.1/sample/PureQT/onboardSDK/onboardSDK.pro</value>
     <value type="bool" key="QmakeProjectManager.QmakeRunConfiguration.UseLibrarySearchPath">true</value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments"></value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.ProFile">onboardSDK.pro</value>

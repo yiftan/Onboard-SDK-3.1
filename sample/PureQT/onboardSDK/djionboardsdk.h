@@ -332,7 +332,7 @@ private:
     };
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
-    int GPRSConnectflag=0;
+    int GPRSConnectflag;
     QString ProtocolHead;
     bool ProtocolFlag[5];/*协议解析结果
                           (0:飞行器参数状态查询;
@@ -400,7 +400,7 @@ private:
 
     QStringList ports;
 
-    float *setspeed;
+    float setspeed;
 
 
 
