@@ -178,6 +178,12 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     for(int i=0;i<5;i++){
         ProtocolFlag[i]=false;
     }
+    GPRSCommand[0]=QString("AT+CGCLASS=\"B\"");
+    GPRSCommand[1]=QString("AT+CGDCONT=1,\"IP\",\"CMNET\"");
+    GPRSCommand[2]=QString("AT+CGATT=1");
+    GPRSCommand[3]=QString("AT+CIPCSGP=1,\"CMNET\"");
+    GPRSCommand[4]=QString("AT+CLPORT=\"TCP\",\"2000\"");
+    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.104.24\",\"9876\"");
     GPRSConnectflag=0;
     setspeed=2.0;
     ui->setupUi(this);
@@ -367,8 +373,8 @@ void DJIonboardSDK::plpMissionCheck()
         status=4;
     else if(plp->abortMission)
         status=5;
-
-    GPRSProtocolSend_5(api->getBroadcastData().pos.longitude,api->getBroadcastData().pos.latitude,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,status);
+    if(GPRSConnectflag)
+        GPRSProtocolSend_5(api->getBroadcastData().pos.longitude,api->getBroadcastData().pos.latitude,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,status);
 }
 
 void DJIonboardSDK::plpMission()
@@ -2443,6 +2449,8 @@ void DJIonboardSDK::initSDK()
     refreshPort();
     setPort();
     setBaudrate();
+    setGPRSPort();
+    setGPRSBaudrate();
 }
 
 void DJIonboardSDK::on_cb_waypoint_point_currentIndexChanged(int index)
@@ -2860,7 +2868,9 @@ void DJIonboardSDK::autoActivateGPRS()
                 ui->btn_GPRSportOpen->setText(GPRSport->portName().append(" not exit"));
         }
         else
+        {
             cnt=1;
+        }
     }
     else if(cnt==1)
     {

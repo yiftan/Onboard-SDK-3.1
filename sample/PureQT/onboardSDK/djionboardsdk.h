@@ -25,7 +25,7 @@
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM6"
-#define   GPRSCOM "COM3"
+#define   GPRSCOM "COM5"
 #define   ACTIVEPERIOD 1000
 using namespace DJI;
 using namespace DJI::onboardSDK;
@@ -322,14 +322,7 @@ private:
     QSerialPort *GPRSport;
     QByteArray *key;
     QString GPRSBUF;
-    QString GPRSCommand[6]={
-        "AT+CGCLASS=\"B\"",
-        "AT+CGDCONT=1,\"IP\",\"CMNET\"",
-        "AT+CGATT=1",
-        "AT+CIPCSGP=1,\"CMNET\"",
-        "AT+CLPORT=\"TCP\",\"2000\"",
-        "AT+CIPSTART=\"TCP\",\"115.230.104.24\",\"9876\""
-    };
+    QString GPRSCommand[6];
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
     int GPRSConnectflag;
