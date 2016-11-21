@@ -271,6 +271,8 @@ class DJIonboardSDK : public QMainWindow
     void on_tmr_GPRS_autosend();
     void on_tmr_GPRS_autoread();
 
+    void plpMissionCheck();
+
     //! @todo sort
 
     void on_btn_webTool_clicked(bool checked);

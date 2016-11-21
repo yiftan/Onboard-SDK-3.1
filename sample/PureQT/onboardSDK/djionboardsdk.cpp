@@ -240,8 +240,12 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     activateGPRSTimer = new QTimer();
     activateGPRSTimer->setInterval(ACTIVEPERIOD-100);
     connect(activateGPRSTimer, SIGNAL(timeout()), this, SLOT(autoActivateGPRS()));
+    plpTimer = new QTimer();
+    plpTimer->setInterval(600);
+    connect(plpTimer,SIGNAL(timeout()),this,SLOT(plpMissionCheck()));
     activateSDKTimer->start();
     activateGPRSTimer->start();
+    plpTimer->start();
 }
 
 DJIonboardSDK::~DJIonboardSDK()
@@ -288,6 +292,22 @@ void DJIonboardSDK::mouseClicked(QWidget* wid)
     QApplication::sendEvent(QWidget::focusWidget(),mEvnPress);
     mEvnRelease = new QMouseEvent(QEvent::MouseButtonRelease, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
     QApplication::sendEvent(QWidget::focusWidget(),mEvnRelease);
+}
+void DJIonboardSDK::plpMissionCheck()
+{
+    int ctrlData=1;
+    switch(ctrlData){
+    case 0: ui->radioButton_4->setChecked(true);//Take off
+            mouseClicked(ui->btn_flight_runTask);
+            break;
+    case 1: ui->radioButton_7->setChecked(true);//Landing
+            mouseClicked(ui->btn_flight_runTask);
+            break;
+    case 2: ui->radioButton_8->setChecked(true);//Go home
+            mouseClicked(ui->btn_flight_runTask);
+            break;
+    case 3: mouseClicked(ui->btn_plp_start_stop);
+    }
 }
 
 void DJIonboardSDK::plpMission()
@@ -817,7 +837,7 @@ void DJIonboardSDK::setGPRSBaudrate()
 
 void DJIonboardSDK::setGPRSPort()
 {
-    GPRSport->setPortName("COM3");
+    GPRSport->setPortName(GPRSCOM);
 }
 
 void DJIonboardSDK::openGPRSPort()
@@ -1223,8 +1243,8 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
         }
         else
         {
-            setGPRSBaudrate();
             setGPRSPort();
+            setGPRSBaudrate();
             openGPRSPort();
             GPRSautoSend->start();
             GPRSautoRead->start();
@@ -1895,7 +1915,8 @@ void DJIonboardSDK::on_tmr_Broadcast()
     {
         activateSDKTimer->start();
     }
-    qDebug()<<Flight::toEulerAngle(api->getBroadcastData().q).yaw*RAD2DEG;
+    if(!GPRSport->isOpen()&&!activateGPRSTimer->isActive())
+        activateGPRSTimer->start();
 
 
     // qDebug()<<api->getFilter().recvIndex;
@@ -2692,8 +2713,39 @@ void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
 
 void DJIonboardSDK::autoActivateGPRS()
 {
-
-    activateGPRSTimer->stop();
+    static int cnt=0;
+    if(cnt==0)
+    {
+        if(!GPRSport->isOpen())
+        {
+            GPRSConnectflag=0;
+            on_btn_portRefresh_clicked();
+            if(ports.contains(GPRSCOM))
+            {
+                setGPRSPort();
+                on_btn_GPRSportOpen_clicked();
+            }
+            else
+                ui->btn_GPRSportOpen->setText(GPRSport->portName().append(" not exit"));
+        }
+        else
+            cnt=1;
+    }
+    else if(cnt==1)
+    {
+        if(!GPRSport->isOpen())
+            cnt=0;
+        else
+        {
+            GPRSPortCtl();
+            if(GPRSConnectflag==1)
+                cnt=2;
+        }
+    }
+    else if(cnt==2)
+    {
+       activateGPRSTimer->stop();
+    }
 }
 
 void DJIonboardSDK::autoActivateSDK()
