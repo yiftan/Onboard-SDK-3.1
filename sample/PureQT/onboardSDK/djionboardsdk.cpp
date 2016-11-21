@@ -1041,7 +1041,6 @@ void DJIonboardSDK::GPRSProtocolRead()
                                 QStringList DirectInfo=Protocol[3+i].split("|");
                                 FlightDirectSet.pointData[i].Lon=DirectInfo[0].toDouble();
                                 FlightDirectSet.pointData[i].Lan=DirectInfo[1].toDouble();
-                                FlightDirectSet.pointData[i].Height=DirectInfo[2].toDouble();
                                 //GPRSDataSend(QString::number(FlightDirectSet.pointData[i].Lon,'.',11));
                             }
                             GPRSProtocolSend_2('Y');
@@ -1184,7 +1183,7 @@ void DJIonboardSDK::GPRSProtocolSend_4(int ErrorNum, QString ErrorType,double Lo
 
     GPRSDataSend("AT+CIPSEND");
     sleepmSec(1000);
-    QTime b=QTime();
+    QTime b=QTime(0,0,0,0);
     QTime t=QTime::currentTime();
     QString Head=QString::number(b.msecsTo(t),10);
     QString tmp=Head+"=E="+QString::number(ErrorNum,10)+"="+ErrorType+"="+\
@@ -1228,7 +1227,7 @@ void DJIonboardSDK::GPRSProtocolSend_6(QString StatusCode)
 
     GPRSDataSend("AT+CIPSEND");
     sleepmSec(1000);
-    QTime b=QTime();
+    QTime b=QTime(0,0,0,0);
     QTime t=QTime::currentTime();
     QString Head=QString::number(b.msecsTo(t),10);
     QString tmp=Head+"=T="+StatusCode+"=";
@@ -1245,7 +1244,7 @@ void DJIonboardSDK::GPRSProtocolSend_6(QString StatusCode)
 
 void DJIonboardSDK::on_tmr_GPRS_autosend()
 {
-    GPRSPortCtl();
+    //GPRSPortCtl();
 }
 
 void DJIonboardSDK::on_tmr_GPRS_autoread()
@@ -1279,7 +1278,7 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
     {
         if(GPRSport->isOpen())
         {
-            //GPRSautoSend->stop();
+            GPRSautoSend->stop();
             GPRSautoRead->stop();
             closeGPRSPort();
         }
@@ -1288,7 +1287,7 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
             setGPRSPort();
             setGPRSBaudrate();
             openGPRSPort();
-            //GPRSautoSend->start();
+            GPRSautoSend->start();
             GPRSautoRead->start();
 
             //ui->lineEdit_GPRSres->setText("connect ok");
@@ -1303,7 +1302,7 @@ void DJIonboardSDK::on_btn_GPRSportSend_clicked()
     //GPRSDATA=ui->lineEdit_GPRSsend->text();
     //GPRSDataSend(GPRSDATA);
     //GPRSProtocolSend_0(120.13143165691,30.272977524721,20.12,1.0,1);
-    GPRSProtocolSend_4(1,"error",120.13143165691,30.272977524721);
+    //GPRSProtocolSend_4(1,"error",120.13143165691,30.272977524721);
 }
 
 void DJIonboardSDK::on_btn_GPRSportRead_clicked()
@@ -1315,8 +1314,6 @@ void DJIonboardSDK::on_btn_GPRSportClear_clicked()
 {
     ui->tb_GPRSDisplay->clear();
 }
-
-
 
 void DJIonboardSDK::on_comboBox_portName_currentIndexChanged(int index)
 {
@@ -2294,13 +2291,11 @@ void DJIonboardSDK::wpAddPoint()
                                   new QStandardItem(QString::number(FlightDirectSet.pointData[number].Lon,'g',11)));
             waypointData->setItem(number, 2,
                                   new QStandardItem(QString::number(FlightDirectSet.pointData[number].Lan,'g',11)));
-            waypointData->setItem(number, 3,
-                                  new QStandardItem(QString::number(FlightDirectSet.pointData[number].Height,'g',11)));
-            waypointData->setItem(number, 4, new QStandardItem("not available now"));
+            waypointData->setItem(number, 3, new QStandardItem("not available now"));
+            waypointData->setItem(number, 4, new QStandardItem("0"));
             waypointData->setItem(number, 5, new QStandardItem("0"));
-            waypointData->setItem(number, 6, new QStandardItem("0"));
-            waypointData->setItem(number, 7, new QStandardItem("Clockwise"));
-            waypointData->setItem(number, 8, new QStandardItem("0"));
+            waypointData->setItem(number, 6, new QStandardItem("Clockwise"));
+            waypointData->setItem(number, 7, new QStandardItem("0"));
 
             actionData.append(initAction());
             ui->cb_waypoint_point->addItem(QString::number(ui->cb_waypoint_point->count() - 1));

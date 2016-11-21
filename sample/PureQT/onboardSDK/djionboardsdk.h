@@ -347,7 +347,6 @@ private:
     struct point{
         double Lon;
         double Lan;
-        double Height;
     };//路径点信息
     struct FlightDirSet{
         int pointnumber;
