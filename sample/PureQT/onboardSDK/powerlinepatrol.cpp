@@ -11,6 +11,8 @@ PowerLinePatrol::PowerLinePatrol()
     isTurnOff=false;
     isLanding=true;
     isUsingGPRSData=false;
+    isGoHome=false;
+    isFinished=false;
 }
 void PowerLinePatrol::init(WayPointInitData *Info)
 {
