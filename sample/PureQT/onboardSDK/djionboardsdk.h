@@ -58,14 +58,16 @@ class DJIonboardSDK : public QMainWindow
     void GPRSPortCtl();
     void GPRSDataRead();
     void GPRSDataSend(QString GPRSDATA);
+
     //GPRS PROTOCOL COMMAND
     void GPRSProtocolRead();
-    void GPRSProtocolSend_0(double Lon,double Lan,double height,double v,int status);
-    void GPRSProtocolSend_1(QString Flight_status);
-    void GPRSProtocolSend_2(char res);
-    void GPRSProtocolSend_3(char res);
-    void GPRSProtocolSend_4(int commandtype,char res);
-    void GPRSProtocolSend_5(int ErrorNum, QString ErrorType,double Lon, double Lan);
+    void GPRSProtocolSend_0(double Height, double v);//发送飞行器状态信息P
+    void GPRSProtocolSend_1(char res);//发送状态设置回复S
+    void GPRSProtocolSend_2(char res);//发送路径信息设置结果D
+    void GPRSProtocolSend_3(int CommandType,char res);//发送飞行器控制命令回复C
+    void GPRSProtocolSend_4(int ErrorNum, QString ErrorType,double Lon, double Lan);//发送故障检测信息E
+    void GPRSProtocolSend_5(double Lon,double Lan,double height,double v,int status);//发送心跳数据L
+    void GPRSProtocolSend_6(QString StatusCode);//发送状态编码T
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -325,31 +327,37 @@ private:
         "AT+CGATT=1",
         "AT+CIPCSGP=1,\"CMNET\"",
         "AT+CLPORT=\"TCP\",\"2000\"",
-        "AT+CIPSTART=\"TCP\",\"115.230.104.1\",\"9876\""
+        "AT+CIPSTART=\"TCP\",\"115.230.104.24\",\"9876\""
     };
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
     int GPRSConnectflag=0;
     QString ProtocolHead;
-    struct ProtocolRev{
-        int ProtocolType;
-        bool ProtocolSuccess;
-    }ProtocolFlag{0,false};
+    bool ProtocolFlag[5];/*协议解析结果
+                          (0:飞行器参数状态查询;
+                           1:飞行器参数设置;
+                           2:导航路径设置;
+                           3:飞行器控制命令设置;
+                           4:故障信息上传结果)*/
     struct FlightStaSet{
-        QString FlightSt;
-        QString PID;
-        QString SenserData;
-    }FlightStatusSet;
+        double Height;
+        double v;
+    }FlightStatusSet;//飞行高度和速度设置
     struct point{
         double Lon;
         double Lan;
         double Height;
-    };
+    };//路径点信息
     struct FlightDirSet{
         int pointnumber;
         struct point *pointData;
     }FlightDirectSet;
-    int CommandData;
+    int CommandData;/*飞行器控制命令类型
+                     (1:起飞;
+                      2:执行任务;
+                      3:终止任务;
+                      4:降落;
+                      5:返航)*/
 
     Flight *flight;
     uint8_t flightFlag;
