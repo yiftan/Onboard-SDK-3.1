@@ -25,7 +25,7 @@
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM5"
-#define   GPRSCOM "COM8"
+#define   GPRSCOM "COM3"
 #define   ACTIVEPERIOD 1000
 using namespace DJI;
 using namespace DJI::onboardSDK;
@@ -64,8 +64,8 @@ class DJIonboardSDK : public QMainWindow
     void GPRSProtocolSend_1(char res);//发送状态设置回复S
     void GPRSProtocolSend_2(char res);//发送路径信息设置结果D
     void GPRSProtocolSend_3(int CommandType,char res);//发送飞行器控制命令回复C
-    void GPRSProtocolSend_4(int ErrorNum, QString ErrorType,double Lon, double Lan);//发送故障检测信息E
-    void GPRSProtocolSend_5(double Lon,double Lan,double height,double v,int status);//发送心跳数据L
+    void GPRSProtocolSend_4(int ErrorNum, QString ErrorType,double Lon, double Lat);//发送故障检测信息E
+    void GPRSProtocolSend_5(double Lon,double Lat,double height,double v,int status);//发送心跳数据L
     void GPRSProtocolSend_6(QString StatusCode);//发送状态编码T
 
   protected:
@@ -323,7 +323,7 @@ private:
     QSerialPort *GPRSport;
     QByteArray *key;
     QString GPRSBUF;
-    QString GPRSCommand[6];
+    QString GPRSCommand[7];
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
     int GPRSflag;
@@ -342,7 +342,7 @@ private:
     }FlightStatusSet;//飞行高度和速度设置
     struct point{
         double Lon;
-        double Lan;
+        double Lat;
         //double Height;
     };//路径点信息
     struct FlightDirSet{
