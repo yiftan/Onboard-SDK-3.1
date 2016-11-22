@@ -289,6 +289,10 @@ void DJIonboardSDK::closeEvent(QCloseEvent *)
     }
     if (ui->btn_coreSetControl->text() == "Release Control")
         api->setControl(false, DJIonboardSDK::setControlCallback, this);
+    if(GPRSConnectflag==1)
+    {
+        GPRSDataSend("AT+CIPCLOSE");
+    }
 }
 
 void DJIonboardSDK::timerEvent(QTimerEvent *)
@@ -1152,6 +1156,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                         else
                         {
                             ProtocolFlag[1]=false;
+                            GPRSProtocolSend_1('N');
                         }
                     }
                     else
@@ -1159,6 +1164,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                         if(tail!=X)
                         {
                             ProtocolFlag[1]=false;
+                            GPRSProtocolSend_1('N');
                         }
                     }
                     break;
@@ -1222,6 +1228,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                         else
                         {
                             ProtocolFlag[3]=false;
+                            //GPRSProtocolSend_3('N');
                         }
                     }
                     else
@@ -1229,6 +1236,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                         if(tail!=X)
                         {
                             ProtocolFlag[3]=false;
+                            //GPRSProtocolSend_3('N');
                         }
                     }
                     break;
