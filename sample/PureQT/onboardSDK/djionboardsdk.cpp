@@ -952,7 +952,10 @@ void DJIonboardSDK::GPRSDataRead()
 
     char* tmp=(char*)malloc(sizeof(char)*BUFFER_SIZE);
 
-    GPRSBUF_len=GPRSdriver->charreadall(tmp,BUFFER_SIZE);
+    if(GPRSConnectflag==0&&GPRSBUF.isEmpty()||GPRSConnectflag==1)
+    {
+        GPRSBUF_len=GPRSdriver->charreadall(tmp,BUFFER_SIZE);
+    }
 
     if (GPRSBUF_len >0)
     {
@@ -1008,11 +1011,11 @@ void DJIonboardSDK::GPRSPortCtl()
         else if(GPRSBUF.contains("OK",Qt::CaseSensitive)&&GPRSBUF.contains(GPRSCommand[GPRSflag],Qt::CaseSensitive))
         {
             GPRSflag++;
-            cnt==0;
+            cnt=0;
             if(GPRSflag>4)
                 GPRSst=1;
         }
-        else if(!GPRSBUF.isEmpty())
+        else //if(!GPRSBUF.isEmpty())
         {
             GPRSDataSend(GPRSCommand[GPRSflag]);
             cnt++;
@@ -1038,7 +1041,7 @@ void DJIonboardSDK::GPRSPortCtl()
         else if(GPRSBUF.contains("CONNECT OK",Qt::CaseSensitive)||GPRSBUF.contains("ALREADY CONNECT",Qt::CaseSensitive))
         {
             GPRSst=2;
-            cnt==0;
+            cnt=0;
         }
         else if(GPRSBUF.contains("ERROR",Qt::CaseSensitive)&&GPRSBUF.contains(GPRSCommand[GPRSflag],Qt::CaseSensitive))
         {
