@@ -25,7 +25,7 @@
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM6"
-#define   GPRSCOM "COM5"
+#define   GPRSCOM "COM4"
 #define   ACTIVEPERIOD 1000
 using namespace DJI;
 using namespace DJI::onboardSDK;
@@ -118,6 +118,7 @@ class DJIonboardSDK : public QMainWindow
     //! @note too much slots, tired to rename.
     void autoActivateSDK();
     void autoActivateGPRS();
+    void on_tmr_autoSendStatus();
     void on_btn_portRefresh_clicked();
     void on_btn_portOpen_clicked();
     void on_comboBox_portName_currentIndexChanged(int index);
@@ -325,6 +326,7 @@ private:
     QString GPRSCommand[6];
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
+    int GPRSflag;
     int GPRSConnectflag;
     QString ProtocolHead;
     bool ProtocolFlag[5];/*协议解析结果
@@ -340,7 +342,7 @@ private:
     struct point{
         double Lon;
         double Lan;
-        double Height;
+        //double Height;
     };//路径点信息
     struct FlightDirSet{
         int pointnumber;
@@ -394,6 +396,10 @@ private:
     QStringList ports;
 
     float setspeed;
+
+    QTimer *autoSendStatus;
+
+    int plpstatus;
 
 
 
