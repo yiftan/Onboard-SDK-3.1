@@ -1276,7 +1276,7 @@ void DJIonboardSDK::GPRSProtocolSend_4(int ErrorNum, QString ErrorType,double Lo
 
     GPRSDataSend("AT+CIPSEND");
     sleepmSec(1000);
-    QTime b=QTime();
+    QTime b=QTime(0,0,0,0);
     QTime t=QTime::currentTime();
     QString Head=QString::number(b.msecsTo(t),10);
     QString tmp=Head+"=E="+QString::number(ErrorNum,10)+"="+ErrorType+"="+\
@@ -1320,7 +1320,7 @@ void DJIonboardSDK::GPRSProtocolSend_6(QString StatusCode)
 
     GPRSDataSend("AT+CIPSEND");
     sleepmSec(1000);
-    QTime b=QTime();
+    QTime b=QTime(0,0,0,0);
     QTime t=QTime::currentTime();
     QString Head=QString::number(b.msecsTo(t),10);
     QString tmp=Head+"=T="+StatusCode+"=";
@@ -1337,7 +1337,7 @@ void DJIonboardSDK::GPRSProtocolSend_6(QString StatusCode)
 
 void DJIonboardSDK::on_tmr_GPRS_autosend()
 {
-    GPRSPortCtl();
+    //GPRSPortCtl();
 }
 
 void DJIonboardSDK::on_tmr_GPRS_autoread()
@@ -1371,7 +1371,7 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
     {
         if(GPRSport->isOpen())
         {
-            //GPRSautoSend->stop();
+            GPRSautoSend->stop();
             GPRSautoRead->stop();
             closeGPRSPort();
         }
@@ -1380,7 +1380,7 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
             setGPRSPort();
             setGPRSBaudrate();
             openGPRSPort();
-            //GPRSautoSend->start();
+            GPRSautoSend->start();
             GPRSautoRead->start();
 
             //ui->lineEdit_GPRSres->setText("connect ok");
@@ -1408,8 +1408,6 @@ void DJIonboardSDK::on_btn_GPRSportClear_clicked()
 {
     ui->tb_GPRSDisplay->clear();
 }
-
-
 
 void DJIonboardSDK::on_comboBox_portName_currentIndexChanged(int index)
 {
@@ -2391,9 +2389,8 @@ void DJIonboardSDK::wpAddPoint()
                                   new QStandardItem(QString::number(FlightStatusSet.Height,'g',11)));
             waypointData->setItem(number, 4, new QStandardItem("not available now"));
             waypointData->setItem(number, 5, new QStandardItem("0"));
-            waypointData->setItem(number, 6, new QStandardItem("0"));
-            waypointData->setItem(number, 7, new QStandardItem("Clockwise"));
-            waypointData->setItem(number, 8, new QStandardItem("0"));
+            waypointData->setItem(number, 6, new QStandardItem("Clockwise"));
+            waypointData->setItem(number, 7, new QStandardItem("0"));
 
             actionData.append(initAction());
             ui->cb_waypoint_point->addItem(QString::number(ui->cb_waypoint_point->count() - 1));
