@@ -177,6 +177,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     CommandData=0;
     plpstatus=0;
     GPRSflag=0;
+    GPRSst=0;
     for(int i=0;i<5;i++){
         ProtocolFlag[i]=false;
     }
@@ -960,7 +961,7 @@ void DJIonboardSDK::GPRSDataRead()
             if(tmp[i]==0x0d&&tmp[i+1]==0x0a)
             {
                 cnt++;
-                if(cnt>1)
+                if(cnt>2)
                 {
                     for(int j=i;j<GPRSBUF_len;j++)
                     {
@@ -995,7 +996,76 @@ void DJIonboardSDK::GPRSDataSend(QString GPRSDATA)
 
 void DJIonboardSDK::GPRSPortCtl()
 {
-    static int err1=0,err2=0;
+    static int cnt=0;
+    ui->lineEdit_GPRSres->setText(QString(QString::number(GPRSflag)));
+    if(GPRSst==0)
+    {
+        if(cnt==0)
+        {
+            GPRSDataSend(GPRSCommand[GPRSflag]);
+            cnt++;
+        }
+        else if(GPRSBUF.contains("OK",Qt::CaseSensitive)&&GPRSBUF.contains(GPRSCommand[GPRSflag],Qt::CaseSensitive))
+        {
+            GPRSflag++;
+            cnt==0;
+            if(GPRSflag>4)
+                GPRSst=1;
+        }
+        else if(!GPRSBUF.isEmpty())
+        {
+            GPRSDataSend(GPRSCommand[GPRSflag]);
+            cnt++;
+            if(cnt==3)
+            {
+                GPRSst=0;
+                cnt=0;
+                GPRSflag=0;
+                GPRSDataSend("AT+CIPCLOSE");
+                GPRSDataSend("AT+CIPSHUT");
+                ui->lineEdit_GPRSres->setText("connect failed");
+                GPRSDataSend("AT+CIICR");
+            }
+        }
+    }
+    else if(GPRSst==1)
+    {
+        if(cnt==0)
+        {
+            GPRSDataSend(GPRSCommand[5]);
+            cnt++;
+        }
+        else if(GPRSBUF.contains("CONNECT OK",Qt::CaseSensitive)||GPRSBUF.contains("ALREADY CONNECT",Qt::CaseSensitive))
+        {
+            GPRSst=2;
+            cnt==0;
+        }
+        else if(GPRSBUF.contains("ERROR",Qt::CaseSensitive)&&GPRSBUF.contains(GPRSCommand[GPRSflag],Qt::CaseSensitive))
+        {
+            GPRSDataSend(GPRSCommand[GPRSflag]);
+            cnt++;
+            if(cnt==3)
+            {
+                GPRSst=0;
+                cnt=0;
+                GPRSflag=0;
+                GPRSDataSend("AT+CIPCLOSE");
+                GPRSDataSend("AT+CIPSHUT");
+                ui->lineEdit_GPRSres->setText("connect failed");
+                GPRSDataSend("AT+CIICR");
+            }
+        }
+    }
+    else if(GPRSst==2)
+    {
+        GPRSConnectflag=1;
+        ui->lineEdit_GPRSres->setText("connect ok");
+        //st=3;
+    }
+
+
+
+    /*static int err1=0,err2=0;
 
     QString head="Revim: ";
 
@@ -1031,7 +1101,7 @@ void DJIonboardSDK::GPRSPortCtl()
             }
         }
 
-        if(err1>3||err2>5)
+        if(err1>3||err2>10)
         {
             GPRSDataSend("AT+CIPCLOSE");
             GPRSDataSend("AT+CIPSHUT");
@@ -1047,6 +1117,7 @@ void DJIonboardSDK::GPRSPortCtl()
     {
        GPRSautoSend->stop();
     }*/
+    GPRSBUF.clear();
 }
 
 //GPRS PROTOCOL COMMAND
@@ -2898,6 +2969,7 @@ void DJIonboardSDK::autoActivateGPRS()
         {
             GPRSConnectflag=0;
             GPRSflag=0;
+            GPRSst=0;
             on_btn_portRefresh_clicked();
             if(ports.contains(GPRSCOM))
             {
@@ -2926,6 +2998,8 @@ void DJIonboardSDK::autoActivateGPRS()
     else if(cnt==2)
     {
        activateGPRSTimer->stop();
+       GPRSst=0;
+       GPRSflag=0;
        if(flight->getStatus()==1)
            plpstatus=1;
        //GPRSProtocolSend_6(QString("1001"));

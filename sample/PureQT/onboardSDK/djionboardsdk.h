@@ -327,6 +327,7 @@ private:
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
     int GPRSflag;
+    int GPRSst;
     int GPRSConnectflag;
     QString ProtocolHead;
     bool ProtocolFlag[5];/*协议解析结果
