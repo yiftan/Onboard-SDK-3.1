@@ -175,7 +175,7 @@ void DJIonboardSDK::functionAlloc()
 DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::DJIonboardSDK)
 {
     CommandData=0;
-    plpstatus=0;
+    plpstatus=1;
     GPRSflag=0;
     GPRSst=0;
     for(int i=0;i<5;i++){
@@ -317,8 +317,8 @@ void DJIonboardSDK::mouseClicked(QWidget* wid)
 void DJIonboardSDK::on_tmr_autoSendStatus()
 {
     static int count=0;
-    if(flight->getStatus()==1)
-        plpstatus=1;
+    /*if(flight->getStatus()==1)
+        plpstatus=1;*/
     if(GPRSConnectflag&&count==0)
     {
         GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,plpstatus);
@@ -388,7 +388,8 @@ void DJIonboardSDK::plpMissionCheck()
     if(ProtocolFlag[2])
     {
         plp->isUsingGPRSData=true;
-        mouseClicked(ui->btn_plp_loadAll);
+        //mouseClicked(ui->btn_plp_loadAll);
+        on_btn_plp_loadAll_clicked();
         ProtocolFlag[2]=false;
     }
 
@@ -952,7 +953,7 @@ void DJIonboardSDK::GPRSDataRead()
 
     char* tmp=(char*)malloc(sizeof(char)*BUFFER_SIZE);
 
-    if(GPRSConnectflag==0&&GPRSBUF.isEmpty()||GPRSConnectflag==1)
+    if(GPRSBUF.isEmpty())
     {
         GPRSBUF_len=GPRSdriver->charreadall(tmp,BUFFER_SIZE);
     }
@@ -968,13 +969,14 @@ void DJIonboardSDK::GPRSDataRead()
                 {
                     for(int j=i;j<GPRSBUF_len;j++)
                     {
-                        tmp[j]=0;
+                        tmp[j]='\0';
                     }
                 }
             }
         }
+        tmp[GPRSBUF_len]='\0';
         GPRSBUF=QString(QLatin1String(tmp));
-        ui->tb_GPRSDisplay->append(head.append(GPRSBUF));
+        //ui->tb_GPRSDisplay->append(head.append(GPRSBUF));
     }
 }
 
@@ -1116,7 +1118,7 @@ void DJIonboardSDK::GPRSPortCtl()
             GPRSflag=0;
         }
     }
-    /*else
+    else
     {
        GPRSautoSend->stop();
     }*/
@@ -1210,7 +1212,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                                     //GPRSDataSend(QString::number(FlightDirectSet.pointData[i].Lon,'.',11));
                                 }
                             }
-                            GPRSProtocolSend_2('Y');
+                            //GPRSProtocolSend_2('Y');
                             ProtocolFlag[2]=true;
                         }
                         else
@@ -1258,6 +1260,7 @@ void DJIonboardSDK::GPRSProtocolRead()
             Protocol.clear();
             GPRSBUF.clear();
         }
+        GPRSBUF.clear();
     }
 }
 
@@ -1471,6 +1474,7 @@ void DJIonboardSDK::on_btn_GPRSportSend_clicked()
     //GPRSProtocolSend_0(120.13143165691,30.272977524721,20.12,1.0,1);
     //GPRSProtocolSend_4(1,"error",120.13143165691,30.272977524721);
     GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,plpstatus);
+    qDebug()<<plpstatus;
 }
 
 void DJIonboardSDK::on_btn_GPRSportRead_clicked()
@@ -2449,16 +2453,18 @@ void DJIonboardSDK::wpAddPoint()
 {
     if(FlightDirectSet.pointnumber&&plp->isUsingGPRSData)
     {
-        actionData.clear();
-        ui->cb_waypoint_point->clear();
-        waypointData->clear();
+        while(ui->cb_waypoint_point->count() != 1)
+        {
+            wpRemovePoint();
+        }
+        ui->le_waypoint_number->setText(QString::number(waypointData->rowCount()));
         for(int number = 0;number<FlightDirectSet.pointnumber;number++)
         {
             waypointData->setItem(number, 0, new QStandardItem(QString::number(number)));
             waypointData->setItem(number, 1,
-                                  new QStandardItem(QString::number(FlightDirectSet.pointData[number].Lon,'g',11)));
-            waypointData->setItem(number, 2,
                                   new QStandardItem(QString::number(FlightDirectSet.pointData[number].Lan,'g',11)));
+            waypointData->setItem(number, 2,
+                                  new QStandardItem(QString::number(FlightDirectSet.pointData[number].Lon,'g',11)));
             waypointData->setItem(number, 3,
                                   new QStandardItem(QString::number(FlightStatusSet.Height,'g',11)));
             waypointData->setItem(number, 4, new QStandardItem("not available now"));

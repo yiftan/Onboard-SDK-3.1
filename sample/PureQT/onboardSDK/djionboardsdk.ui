@@ -7045,7 +7045,20 @@
                     </widget>
                    </item>
                    <item row="2" column="0" colspan="2">
-                    <layout class="QHBoxLayout" name="horizontalLayout_127" stretch="0,0,0">
+                    <layout class="QHBoxLayout" name="horizontalLayout_127" stretch="0,0,0,0">
+                     <item>
+                      <spacer name="verticalSpacer_7">
+                       <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>20</width>
+                         <height>40</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
                      <item>
                       <widget class="QPushButton" name="btn_GPRSportSend">
                        <property name="enabled">
@@ -7191,18 +7204,18 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="btg_flightYL"/>
-  <buttongroup name="btg_cameraMode"/>
-  <buttongroup name="btg_flightCL"/>
   <buttongroup name="btg_cameraRoll"/>
-  <buttongroup name="btg_vrcMode"/>
+  <buttongroup name="btg_flightYL"/>
+  <buttongroup name="btg_flightCL"/>
+  <buttongroup name="btg_flightSM"/>
   <buttongroup name="btg_cameraAngle"/>
+  <buttongroup name="btg_cameraYaw"/>
+  <buttongroup name="btg_cameraPitch"/>
+  <buttongroup name="btg_flightTask"/>
+  <buttongroup name="btg_vrcMode"/>
+  <buttongroup name="btg_vrcGear"/>
+  <buttongroup name="btg_cameraMode"/>
   <buttongroup name="btg_flightHL"/>
   <buttongroup name="btg_flightVL"/>
-  <buttongroup name="btg_cameraPitch"/>
-  <buttongroup name="btg_flightSM"/>
-  <buttongroup name="btg_cameraYaw"/>
-  <buttongroup name="btg_vrcGear"/>
-  <buttongroup name="btg_flightTask"/>
  </buttongroups>
 </ui>
