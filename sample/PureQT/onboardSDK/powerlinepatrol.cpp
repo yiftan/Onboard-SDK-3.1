@@ -13,7 +13,23 @@ PowerLinePatrol::PowerLinePatrol()
     isUsingGPRSData=false;
     isGoHome=false;
     isFinished=false;
+    stopped=false;
+    isStart=false;
 }
+void PowerLinePatrol::stop()
+{
+    stopped=true;
+}
+/*void PowerLinePatrol::run()
+{
+    while(!stopped)
+    {
+
+    }
+    stopped=false;
+    //qDebug()<<QString("PLP Thread stoped");
+}*/
+
 void PowerLinePatrol::init(WayPointInitData *Info)
 {
     if(Info)

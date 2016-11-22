@@ -8,10 +8,11 @@ namespace DJI
 namespace onboardSDK
 {
 
-class PowerLinePatrol
+class PowerLinePatrol //: public QThread
 {
 public:
     PowerLinePatrol();
+
 
     void init(WayPointInitData *Info);
     void setInfo(const WayPointInitData &value);
@@ -19,11 +20,13 @@ public:
     bool uploadIndexData(uint8_t pos);
     bool uploadIndexData(WayPointData *data);
     void startMission();
+    void stop();
     PositionData nextPosition();
     WayPointInitData getInfo() const;
     bool Missionclicked;
     bool abortMission;
     bool isRunning;
+    bool isStart;
     bool isObtainControl;
     bool isLoadWayPoint;
     bool isTurnOff;
@@ -31,11 +34,13 @@ public:
     bool isUsingGPRSData;
     bool isGoHome;
     bool isFinished;
+    bool stopped;
 private:
     WayPointInitData info;
     WayPointData *index;
     int posindex;
-
+/*protected:
+    void run();*/
 
 };
 

@@ -264,7 +264,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     activateGPRSTimer->start();
     plpTimer->start();
     autoSendStatus = new QTimer();
-    autoSendStatus->setInterval(6000);
+    autoSendStatus->setInterval(5000);
     connect(autoSendStatus,SIGNAL(timeout()),this,SLOT(on_tmr_autoSendStatus()));
     autoSendStatus->start();
 }
@@ -305,37 +305,36 @@ void DJIonboardSDK::sleepmSec(int mSec)
 }
 void DJIonboardSDK::mouseClicked(QWidget* wid)
 {
-    QPoint pos=wid->pos();
-    QMouseEvent *mEvnPress;
-    QMouseEvent *mEvnRelease;
-    wid->setFocus();
-    mEvnPress = new QMouseEvent(QEvent::MouseButtonPress, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
-    QApplication::sendEvent(QWidget::focusWidget(),mEvnPress);
-    mEvnRelease = new QMouseEvent(QEvent::MouseButtonRelease, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
-    QApplication::sendEvent(QWidget::focusWidget(),mEvnRelease);
+    QPoint pos;
+    pos.setX(1);
+    pos.setY(1);
+    QMouseEvent mEvnPress(QEvent::MouseButtonPress, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent mEvnRelease(QEvent::MouseButtonRelease, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QApplication::sendEvent(wid, &mEvnPress);
+    QApplication::sendEvent(wid, &mEvnRelease);
 }
 void DJIonboardSDK::on_tmr_autoSendStatus()
 {
-    static int count=0;
+    //static int count=0;
     /*if(flight->getStatus()==1)
         plpstatus=1;*/
-    if(GPRSConnectflag&&count==0)
+    if(GPRSConnectflag)
     {
         GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,plpstatus);
-        count=1;
+        //count=1;
     }
 }
 
 void DJIonboardSDK::plpMissionCheck()
 {
-
     if(ProtocolFlag[3])
     {
         switch(CommandData){
             case 1: if(flight->getStatus()==1)
                     {
                         ui->radioButton_4->setChecked(true);//Take off
-                        mouseClicked(ui->btn_flight_runTask);
+                        //mouseClicked(ui->btn_flight_runTask);
+                        on_btn_flight_runTask_clicked();
                         plpstatus=3;
                         GPRSProtocolSend_3(CommandData,'Y');
                     }
@@ -346,7 +345,8 @@ void DJIonboardSDK::plpMissionCheck()
                         GPRSProtocolSend_3(CommandData,'N');
                     else
                     {
-                        mouseClicked(ui->btn_plp_start_stop);//Start mission
+                        //mouseClicked(ui->btn_plp_start_stop);//Start mission
+                        plp->isStart=true;
                         plpstatus=4;
                         GPRSProtocolSend_3(CommandData,'Y');
                     }
@@ -355,7 +355,8 @@ void DJIonboardSDK::plpMissionCheck()
                         GPRSProtocolSend_3(CommandData,'N');
                     else
                     {
-                        mouseClicked(ui->btn_Abortplp);//Abort mission
+                        //mouseClicked(ui->btn_Abortplp);//Abort mission
+                        on_btn_Abortplp_clicked();
                         plpstatus=5;
                         GPRSProtocolSend_3(CommandData,'Y');
                     }
@@ -364,7 +365,8 @@ void DJIonboardSDK::plpMissionCheck()
                     {
                         ui->radioButton_7->setChecked(true);//Landing
                         plpstatus=6;
-                        mouseClicked(ui->btn_flight_runTask);
+                        //mouseClicked(ui->btn_flight_runTask);
+                        on_btn_flight_runTask_clicked();
                         GPRSProtocolSend_3(CommandData,'Y');
                     }
                     else
@@ -374,7 +376,8 @@ void DJIonboardSDK::plpMissionCheck()
                     {
                         ui->radioButton_8->setChecked(true);//Go home
                         plpstatus=8;
-                        mouseClicked(ui->btn_flight_runTask);
+                        //mouseClicked(ui->btn_flight_runTask);
+                        on_btn_flight_runTask_clicked();
                         GPRSProtocolSend_3(CommandData,'Y');
                     }
                     else
@@ -392,7 +395,19 @@ void DJIonboardSDK::plpMissionCheck()
         on_btn_plp_loadAll_clicked();
         ProtocolFlag[2]=false;
     }
-
+    if(ProtocolFlag[0])
+    {
+        GPRSProtocolSend_0(FlightStatusSet.Height,FlightStatusSet.v);
+        ProtocolFlag[0]=false;
+    }
+    if(plp->isStart&&!plp->isRunning)
+    {
+        mouseClicked(ui->btn_plp_start_stop);
+    }
+    else if(plp->isStart&&plp->isRunning)
+    {
+        plp->isStart=false;
+    }
 }
 
 void DJIonboardSDK::plpMission()
@@ -1175,10 +1190,12 @@ void DJIonboardSDK::GPRSProtocolRead()
                             FlightStatusSet.Height=Protocol[2].toDouble();
                             FlightStatusSet.v=Protocol[3].toDouble();
                             ProtocolFlag[1]=true;
+                            GPRSProtocolSend_1('Y');
                         }
                         else
                         {
                             ProtocolFlag[1]=false;
+                            GPRSProtocolSend_1('N');
                         }
                     }
                     break;
@@ -1473,8 +1490,10 @@ void DJIonboardSDK::on_btn_GPRSportSend_clicked()
     //GPRSDataSend(GPRSDATA);
     //GPRSProtocolSend_0(120.13143165691,30.272977524721,20.12,1.0,1);
     //GPRSProtocolSend_4(1,"error",120.13143165691,30.272977524721);
-    GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,plpstatus);
-    qDebug()<<plpstatus;
+    if(GPRSConnectflag==1)
+        GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,plpstatus);
+    ProtocolFlag[3]=true;\
+    CommandData=ui->lineEdit_GPRSres->text().toInt();
 }
 
 void DJIonboardSDK::on_btn_GPRSportRead_clicked()
@@ -2469,8 +2488,9 @@ void DJIonboardSDK::wpAddPoint()
                                   new QStandardItem(QString::number(FlightStatusSet.Height,'g',11)));
             waypointData->setItem(number, 4, new QStandardItem("not available now"));
             waypointData->setItem(number, 5, new QStandardItem("0"));
-            waypointData->setItem(number, 6, new QStandardItem("Clockwise"));
-            waypointData->setItem(number, 7, new QStandardItem("0"));
+            waypointData->setItem(number, 6, new QStandardItem("0"));
+            waypointData->setItem(number, 7, new QStandardItem("Clockwise"));
+            waypointData->setItem(number, 8, new QStandardItem("0"));
 
             actionData.append(initAction());
             ui->cb_waypoint_point->addItem(QString::number(ui->cb_waypoint_point->count() - 1));
@@ -2936,6 +2956,7 @@ void DJIonboardSDK::on_btn_plp_loadAll_clicked()
     {
         on_btn_waypoint_add_clicked();
         plp->Missionclicked=false;
+        GPRSProtocolSend_2('Y');
     }
     if(plp->Missionclicked==false)
         on_btn_plp_init_clicked();
@@ -2949,23 +2970,17 @@ void DJIonboardSDK::on_btn_plp_loadAll_clicked()
     plp->Missionclicked=false;
     sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Waypoint loaded");
     api->serialDevice->displayLog();
-    GPRSProtocolSend_2('Y');
 }
 
-void DJIonboardSDK::on_btn_plp_start_stop_clicked(bool checked)
+void DJIonboardSDK::on_btn_plp_start_stop_clicked()
 {
-    if(plp->isLoadWayPoint)
+    if(plp->isLoadWayPoint&&!plp->isRunning)
     {
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Running...");
         api->serialDevice->displayLog();
         plp->isRunning=true;
         GPRSProtocolSend_6(QString("3000"));
         plpMission();
-    }
-    else
-    {
-        sprintf(DJI::onboardSDK::buffer, "%s","No waypoint");
-        api->serialDevice->displayLog();
     }
 }
 
@@ -3140,4 +3155,3 @@ void DJIonboardSDK::on_btn_Abortplp_clicked()
         api->serialDevice->displayLog();
     }
 }
-

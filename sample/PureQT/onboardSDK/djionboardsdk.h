@@ -285,8 +285,6 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_plp_loadAll_clicked();
 
-    void on_btn_plp_start_stop_clicked(bool checked);
-
     void on_btn_Abortplp_clicked();
 	
     void on_btn_GPRSportOpen_clicked();
@@ -296,6 +294,8 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_GPRSportRead_clicked();
 
     void on_btn_GPRSportClear_clicked();
+
+    void on_btn_plp_start_stop_clicked();
 
 private:
 #ifdef GROUNDSTATION
@@ -387,6 +387,8 @@ private:
     QTimer *activateSDKTimer;
 
     QTimer *activateGPRSTimer;
+
+    QTimer *autoCloseGPRSTimer;
 
     QTimer *plpTimer;
 
