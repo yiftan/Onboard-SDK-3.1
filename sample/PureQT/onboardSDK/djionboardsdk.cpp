@@ -1093,7 +1093,7 @@ void DJIonboardSDK::GPRSPortCtl()
                 }
             }
         }
-        else if(GPRSBUF.contains("CLOSED",Qt::CaseSensitive))
+        else if(GPRSBUF.contains("STATE",Qt::CaseSensitive))
         {
             GPRSDataSend(GPRSCommand[6]);
             cnt++;
@@ -1151,6 +1151,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                         else
                         {
                             ProtocolFlag[0]=false;
+                            GPRSProtocolSend_0('N');
                         }
                     }
                     else
@@ -1167,7 +1168,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                             FlightStatusSet.Height=Protocol[3].toDouble();
                             FlightStatusSet.v=Protocol[4].toDouble();
                             ProtocolFlag[1]=true;
-                            GPRSProtocolSend_1('Y');
+                            //GPRSProtocolSend_1('Y');
                         }
                         else
                         {
@@ -1239,7 +1240,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                         else
                         {
                             ProtocolFlag[3]=false;
-                            //GPRSProtocolSend_3('N');
+                            GPRSProtocolSend_3('N');
                         }
                     }
                     else
@@ -1278,7 +1279,7 @@ void DJIonboardSDK::GPRSProtocolRead()
     }
 }
 
-//发送飞行器状态信息
+//发送飞行器状态信息（H,v）;协议解析结果（N）
 void DJIonboardSDK::GPRSProtocolSend_0(double Height, double v)
 {
     GPRSSendLock=false;
@@ -1297,6 +1298,24 @@ void DJIonboardSDK::GPRSProtocolSend_0(double Height, double v)
     GPRSDataSend(tmp);
     GPRSDataSend(QString(s));
     GPRSSendLock=true;
+}
+
+void DJIonboardSDK::GPRSProtocolSend_0(char res)
+{
+    char s=0x1a;
+
+    GPRSDataSend("AT+CIPSEND");
+    sleepmSec(1000);
+    QString tmp=ProtocolHead+"=S="+QString(res)+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    GPRSDataSend(tmp);
+    GPRSDataSend(QString(s));
 }
 
 //发送状态设置回复
@@ -1343,7 +1362,7 @@ void DJIonboardSDK::GPRSProtocolSend_2(char res)
 
 }
 
-//发送飞行器控制命令回复
+//发送飞行器控制命令回复（CT,Res）;协议解析结果（N）
 void DJIonboardSDK::GPRSProtocolSend_3(int CommandType, char res)
 {
     GPRSSendLock=false;
@@ -1362,6 +1381,25 @@ void DJIonboardSDK::GPRSProtocolSend_3(int CommandType, char res)
     GPRSDataSend(tmp);
     GPRSDataSend(QString(s));
     GPRSSendLock=true;
+}
+
+void DJIonboardSDK::GPRSProtocolSend_3(char res)
+{
+    char s=0x1a;
+
+    GPRSDataSend("AT+CIPSEND");
+    sleepmSec(1000);
+    QString tmp=ProtocolHead+"=C="+QString(res)+"="+QString(res)+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    GPRSDataSend(tmp);
+    GPRSDataSend(QString(s));
+
 }
 
 //发送故障检测信息
