@@ -61,9 +61,11 @@ class DJIonboardSDK : public QMainWindow
     //GPRS PROTOCOL COMMAND
     void GPRSProtocolRead();
     void GPRSProtocolSend_0(double Height, double v);//发送飞行器状态信息P
+    void GPRSProtocolSend_0(char res);//发送飞行状态查询协议解析结果P
     void GPRSProtocolSend_1(char res);//发送状态设置回复S
     void GPRSProtocolSend_2(char res);//发送路径信息设置结果D
     void GPRSProtocolSend_3(int CommandType,char res);//发送飞行器控制命令回复C
+    void GPRSProtocolSend_3(char res);//发送飞行器控制命令协议解析结果C
     void GPRSProtocolSend_4(int ErrorNum, QString ErrorType,double Lon, double Lat);//发送故障检测信息E
     void GPRSProtocolSend_5(double Lon,double Lat,double height,double v,int status);//发送心跳数据L
     void GPRSProtocolSend_6(QString StatusCode);//发送状态编码T
