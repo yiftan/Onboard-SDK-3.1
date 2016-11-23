@@ -392,7 +392,7 @@ void DJIonboardSDK::plpMissionCheck()
                     break;
             default: break;
         }
-        //CommandData=0;
+        CommandData=0;
         ProtocolFlag[3]=false;
     }
     if(ProtocolFlag[2])
@@ -410,9 +410,6 @@ void DJIonboardSDK::plpMissionCheck()
     if(plp->isStart&&!plp->isRunning)
     {
         mouseClicked(ui->btn_plp_start_stop);
-    }
-    else if(plp->isStart&&plp->isRunning)
-    {
         plp->isStart=false;
     }
 }
@@ -1168,7 +1165,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                             FlightStatusSet.Height=Protocol[3].toDouble();
                             FlightStatusSet.v=Protocol[4].toDouble();
                             ProtocolFlag[1]=true;
-                            //GPRSProtocolSend_1('Y');
+                            GPRSProtocolSend_1('Y');
                         }
                         else
                         {
@@ -3080,7 +3077,10 @@ void DJIonboardSDK::autoActivateGPRS()
        GPRSflag=0;
        if(flight->getStatus()==1)
            plpstatus=1;
-       //GPRSProtocolSend_6(QString("1001"));
+       GPRSautoRead->stop();
+       GPRSautoRead->setInterval(2000);
+       GPRSautoRead->start();
+       GPRSProtocolSend_6(QString("1001"));
     }
 }
 
