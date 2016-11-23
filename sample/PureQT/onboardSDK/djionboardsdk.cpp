@@ -1303,7 +1303,7 @@ void DJIonboardSDK::GPRSProtocolSend_0(char res)
 
     GPRSDataSend("AT+CIPSEND");
     sleepmSec(1000);
-    QString tmp=ProtocolHead+"=S="+QString(res)+"=";
+    QString tmp=ProtocolHead+"=U=S="+QString(res)+"=";
     char X=tmp[0].toLatin1();
     for(int i=1;i<tmp.length();i++)
     {
@@ -1386,7 +1386,7 @@ void DJIonboardSDK::GPRSProtocolSend_3(char res)
 
     GPRSDataSend("AT+CIPSEND");
     sleepmSec(1000);
-    QString tmp=ProtocolHead+"=C="+QString(res)+"="+QString(res)+"=";
+    QString tmp=ProtocolHead+"=U=C="+QString(res)+"="+QString(res)+"=";
     char X=tmp[0].toLatin1();
     for(int i=1;i<tmp.length();i++)
     {
