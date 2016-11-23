@@ -24,7 +24,7 @@
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
-#define   SDKCOM  "COM5"
+#define   SDKCOM  "COM4"
 #define   GPRSCOM "COM8"
 #define   ACTIVEPERIOD 1000
 using namespace DJI;

@@ -402,6 +402,13 @@ void DJIonboardSDK::plpMissionCheck()
         on_btn_plp_loadAll_clicked();
         ProtocolFlag[2]=false;
     }
+    if(ProtocolFlag[1])
+    {
+        plp->setSpeed=FlightStatusSet.v;
+        plp->setheight=FlightStatusSet.Height;
+        ProtocolFlag[1]=false;
+    }
+
     if(ProtocolFlag[0])
     {
         GPRSProtocolSend_0(FlightStatusSet.Height,FlightStatusSet.v);
@@ -2634,7 +2641,7 @@ void DJIonboardSDK::initSDK()
     cam = new Camera(api);
     hp = new HotPoint(api);
     wp = new WayPoint(api);
-    plp = new PowerLinePatrol();
+    plp = new PowerLinePatrol(api,flight);
     refreshPort();
     setPort();
     setBaudrate();
@@ -3031,7 +3038,8 @@ void DJIonboardSDK::on_btn_plp_start_stop_clicked()
         api->serialDevice->displayLog();
         plp->isRunning=true;
         GPRSProtocolSend_6(QString("3000"));
-        plpMission();
+        //plpMission();
+        plp->start();
     }
 }
 

@@ -4,8 +4,10 @@ using namespace DJI::onboardSDK;
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
-PowerLinePatrol::PowerLinePatrol()
+PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
 {
+    this->api=api;
+    this->flight=flight;
     Missionclicked=false;
     abortMission=false;
     isRunning=false;
@@ -18,6 +20,8 @@ PowerLinePatrol::PowerLinePatrol()
     isFinished=false;
     stopped=false;
     isStart=false;
+    setSpeed=2.0;
+    setheight=2.0;
 }
 void PowerLinePatrol::stop()
 {
@@ -27,7 +31,7 @@ void PowerLinePatrol::run()
 {
     while(!stopped)
     {
-
+        plpMission();
     }
     stopped=false;
     //qDebug()<<QString("PLP Thread stoped");
@@ -104,13 +108,7 @@ PositionData PowerLinePatrol::nextPosition()
     }
     return pos;
 }
-void PowerLinePatrol::sleepmSec(int mSec)
-{
-    QTime dieTime = QTime::currentTime().addMSecs(mSec);
-    while( QTime::currentTime() <dieTime )
-        ;
-}
-void PowerLinePatrol::plpMission(CoreAPI *api, Flight *flight)
+void PowerLinePatrol::plpMission()
 {
     startMission();
     PositionData nextPos=nextPosition();
@@ -156,6 +154,7 @@ void PowerLinePatrol::plpMission(CoreAPI *api, Flight *flight)
     sleepmSec(1000);
     on_btn_coreSetControl_clicked();*/
     //flight->task(Flight::TASK_GOHOME);
+    stopped=true;
 }
 
 void PowerLinePatrol::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
@@ -206,7 +205,9 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       //MovementControl API call
 
       flight->setMovementControl(flag,0, 0, zDesired, yawCmd*RAD2DEG);
-      sleepmSec(20);
+      QEventLoop eventloop;
+      QTimer::singleShot(20, &eventloop, SLOT(quit()));
+      eventloop.exec();
 
       elapsedTime += 20;
 
@@ -284,7 +285,9 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       }
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
-      sleepmSec(20);
+      QEventLoop eventloop;
+      QTimer::singleShot(20, &eventloop, SLOT(quit()));
+      eventloop.exec();
       elapsedTime += 20;
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
@@ -365,7 +368,9 @@ int PowerLinePatrol::moveByPositionBodyFrame(PositionData* targetPosition,int ti
       }
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
-      sleepmSec(20);
+      QEventLoop eventloop;
+      QTimer::singleShot(20, &eventloop, SLOT(quit()));
+      eventloop.exec();
       elapsedTime += 20;
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
