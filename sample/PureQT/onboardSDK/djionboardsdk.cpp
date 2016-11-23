@@ -1500,8 +1500,6 @@ void DJIonboardSDK::on_btn_GPRSportSend_clicked()
     //GPRSProtocolSend_4(1,"error",120.13143165691,30.272977524721);
     if(GPRSConnectflag==1)
         GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,plpstatus);
-    ProtocolFlag[3]=true;\
-    CommandData=ui->lineEdit_GPRSres->text().toInt();
 }
 
 void DJIonboardSDK::on_btn_GPRSportRead_clicked()
