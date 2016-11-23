@@ -268,6 +268,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     autoSendStatus->setInterval(5000);
     connect(autoSendStatus,SIGNAL(timeout()),this,SLOT(on_tmr_autoSendStatus()));
     autoSendStatus->start();
+    ui->btn_GPRSportSend->setText(QString("started"));
 }
 
 DJIonboardSDK::~DJIonboardSDK()
@@ -1493,13 +1494,23 @@ void DJIonboardSDK::on_btn_GPRSportOpen_clicked()
 
 void DJIonboardSDK::on_btn_GPRSportSend_clicked()
 {
+    if(autoSendStatus->isActive())
+    {
+        autoSendStatus->stop();
+        ui->btn_GPRSportSend->setText(QString("stopped"));
+    }
+    else
+    {
+        autoSendStatus->start();
+        ui->btn_GPRSportSend->setText(QString("started"));
+    }
     //GPRSPortCtl();
     //GPRSDATA=ui->lineEdit_GPRSsend->text();
     //GPRSDataSend(GPRSDATA);
     //GPRSProtocolSend_0(120.13143165691,30.272977524721,20.12,1.0,1);
     //GPRSProtocolSend_4(1,"error",120.13143165691,30.272977524721);
-    if(GPRSConnectflag==1)
-        GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,plpstatus);
+    //if(GPRSConnectflag==1)
+        //GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,plpstatus);
 }
 
 void DJIonboardSDK::on_btn_GPRSportRead_clicked()
