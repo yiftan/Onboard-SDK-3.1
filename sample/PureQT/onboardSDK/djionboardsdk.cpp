@@ -12,6 +12,83 @@
 #include <string>
 
 #include <QDebug>
+#include "DJI_utility.h"
+#include "DJI_guidance.h"
+#pragma comment(lib,"F:/QT_project/Onboard-SDK-3.1/sample/PureQT/onboardSDK/DJI_guidance.lib")
+using namespace std;
+PowerLinePatrol p;
+int my_callback(int data_type, int data_len, char *content)
+{
+    p.enter();
+    if ( e_obstacle_distance == data_type && NULL != content )
+    {
+        obstacle_distance *oa = (obstacle_distance*)content;
+       printf( "obstacle distance:" );
+
+        for ( int i = 0; i < CAMERA_PAIR_NUM; ++i )
+            printf( " %f ", 0.01f * oa->distance[i] );
+
+        printf( "\n" );
+        printf( "frame index:%d,stamp:%d\n", oa->frame_index, oa->time_stamp );
+    }
+    p.set_event();
+    p.leave();
+    return 0;
+}
+
+std::ostream& operator<<(std::ostream& out, const e_sdk_err_code value){
+    const char* s = 0;
+    static char str[100]={0};
+#define PROCESS_VAL(p) case(p): s = #p; break;
+    switch(value){
+        PROCESS_VAL(e_OK);
+        PROCESS_VAL(e_load_libusb_err);
+        PROCESS_VAL(e_sdk_not_inited);
+        PROCESS_VAL(e_disparity_not_allowed);
+        PROCESS_VAL(e_image_frequency_not_allowed);
+        PROCESS_VAL(e_config_not_ready);
+        PROCESS_VAL(e_online_flag_not_ready);
+        PROCESS_VAL(e_stereo_cali_not_ready);
+        PROCESS_VAL(e_libusb_io_err);
+        PROCESS_VAL(e_timeout);
+    default:
+        strcpy(str, "Unknown error");
+        s = str;
+        break;
+    }
+#undef PROCESS_VAL
+
+    return out << s;
+}
+
+#define RETURN_IF_ERR(err_code) { if( err_code ){ release_transfer(); \
+std::cout<<"Error: "<<(e_sdk_err_code)err_code<<" at "<<__LINE__<<","<<__FILE__<<std::endl; return -1;}}
+
+int DJIonboardSDK::guidanceTest(){
+    reset_config();  // clear all data subscription
+        int err_code = init_transfer(); //wait for board ready and init transfer thread
+        RETURN_IF_ERR( err_code );
+        select_obstacle_distance();
+        user_call_back ucb=my_callback;
+        err_code = set_sdk_event_handler( ucb );
+        RETURN_IF_ERR( err_code );
+        err_code = start_transfer();
+        RETURN_IF_ERR( err_code );
+
+
+
+        while(1)
+        {
+            p.wait_event();
+        }
+
+        err_code = stop_transfer();
+        RETURN_IF_ERR( err_code );
+        //make sure the ack packet from GUIDANCE is received
+        //sleep( 1000000 );
+        err_code = release_transfer();
+        RETURN_IF_ERR( err_code );
+}
 
 void DJIonboardSDK::initFollow()
 {
@@ -177,7 +254,6 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     CommandData=0;
     GPRSflag=0;
     GPRSst=0;
-    GPRSSendLock=true;
     for(int i=0;i<5;i++){
         ProtocolFlag[i]=false;
     }
@@ -1798,6 +1874,7 @@ void DJIonboardSDK::flightSend()
 void DJIonboardSDK::on_btn_flight_send_clicked()
 {
     flightSend();
+	guidanceTest();
 }
 
 void DJIonboardSDK::filght_autosend()

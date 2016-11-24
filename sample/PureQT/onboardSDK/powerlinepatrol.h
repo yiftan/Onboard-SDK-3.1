@@ -14,6 +14,8 @@
 #include <QComboBox>
 #include <QEventLoop>
 #include <fstream>
+#include <Windows.h>
+#include <WinBase.h>
 
 namespace DJI
 {
@@ -24,7 +26,7 @@ class PowerLinePatrol : public QThread
 {
 public:
     PowerLinePatrol(CoreAPI *api, Flight *flight);
-
+	~PowerLinePatrol();
 
     void init(WayPointInitData *Info);
     void setInfo(const WayPointInitData &value);
@@ -46,6 +48,10 @@ public:
     bool isUsingGPRSData;
     bool isGoHome;
     bool isFinished;
+	void enter();
+    void leave();
+    int set_event();
+    int wait_event();
     bool stopped;
     int plpstatus;
     float setSpeed;
@@ -66,6 +72,9 @@ private:
     PositionData curpos;
     CoreAPI *api;
     Flight *flight;
+	CRITICAL_SECTION  m_critical_section;
+    HANDLE      m_pipe_read;
+    HANDLE      m_pipe_write;
 protected:
     void run();
 

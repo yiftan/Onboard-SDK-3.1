@@ -24,7 +24,20 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     isStart=false;
     setSpeed=2.0;
     setheight=2.0;
+	InitializeCriticalSection( &m_critical_section );
+    SECURITY_ATTRIBUTES   sa;
+    sa.nLength = sizeof(sa);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = TRUE;
+    CreatePipe( &m_pipe_read, &m_pipe_write, &sa, 0 );
 }
+
+PowerLinePatrol::~PowerLinePatrol()
+{
+    CloseHandle( m_pipe_read );
+    CloseHandle( m_pipe_write );
+}
+
 void PowerLinePatrol::stop()
 {
     stopped=true;
@@ -39,6 +52,31 @@ void PowerLinePatrol::run()
     //qDebug()<<QString("PLP Thread stoped");
 }
 
+void PowerLinePatrol::enter()
+{
+    EnterCriticalSection( &m_critical_section );
+}
+
+void PowerLinePatrol::leave()
+{
+    LeaveCriticalSection( &m_critical_section );
+}
+
+int PowerLinePatrol::set_event()
+{
+    char buffer[1] = {0};
+    int count = 0;
+    int ret = WriteFile( m_pipe_write, (LPWORD)buffer, 1, (LPDWORD)&count, NULL );
+    return ret;
+}
+
+int PowerLinePatrol::wait_event()
+{
+    char buffer[1] = {0};
+    int count = 0;
+    int ret = ReadFile( m_pipe_read, (LPWORD)buffer, 1, (LPDWORD)&count, NULL );
+    return ret;
+}
 void PowerLinePatrol::init(WayPointInitData *Info)
 {
     if(Info)

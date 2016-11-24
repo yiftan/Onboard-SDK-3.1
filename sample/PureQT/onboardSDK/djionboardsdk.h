@@ -29,7 +29,7 @@
 #define   ACTIVEPERIOD 1000
 using namespace DJI;
 using namespace DJI::onboardSDK;
-
+extern PowerLinePatrol p;
 namespace Ui
 {
 class DJIonboardSDK;
@@ -45,6 +45,7 @@ class DJIonboardSDK : public QMainWindow
     void releaseControl();
 
   private:
+	int guidanceTest();
     void setBaudrate();
     void setGPRSBaudrate();
     void setPort();
@@ -331,7 +332,6 @@ private:
     QString GPRSCommand[7];
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
-    volatile bool GPRSSendLock;
     int GPRSflag;
     int GPRSst;
     int GPRSConnectflag;
