@@ -325,6 +325,9 @@ private:
     QSerialPort *GPRSport;
     QByteArray *key;
     QString GPRSBUF;
+    QStringList GPRSSendBufComm;
+    QStringList GPRSSendBufData;
+    QStringList GPRSSendBufHD;
     QString GPRSCommand[7];
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
@@ -332,6 +335,7 @@ private:
     int GPRSflag;
     int GPRSst;
     int GPRSConnectflag;
+    int GPRSSendflag;
     QString ProtocolHead;
     bool ProtocolFlag[5];/*协议解析结果
                           (0:飞行器参数状态查询;
