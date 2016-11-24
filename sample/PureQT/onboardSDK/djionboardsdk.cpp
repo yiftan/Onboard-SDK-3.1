@@ -175,7 +175,6 @@ void DJIonboardSDK::functionAlloc()
 DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::DJIonboardSDK)
 {
     CommandData=0;
-    plp->plpstatus=1;
     GPRSflag=0;
     GPRSst=0;
     GPRSSendLock=true;
@@ -187,7 +186,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     GPRSCommand[2]=QString("AT+CGATT=1");
     GPRSCommand[3]=QString("AT+CIPCSGP=1,\"CMNET\"");
     GPRSCommand[4]=QString("AT+CLPORT=\"TCP\",\"2000\"");
-    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.111.73\",\"9876\"");
+    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.111.243\",\"9876\"");//IP
     GPRSCommand[6]=QString("AT+CIPSHUT");
     GPRSConnectflag=0;
     setspeed=2.0;
@@ -266,7 +265,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     activateGPRSTimer->start();
     plpTimer->start();
     autoSendStatus = new QTimer();
-    autoSendStatus->setInterval(5000);
+    autoSendStatus->setInterval(10000);
     connect(autoSendStatus,SIGNAL(timeout()),this,SLOT(on_tmr_autoSendStatus()));
     autoSendStatus->start();
     ui->btn_GPRSportSend->setText(QString("started"));
@@ -327,7 +326,7 @@ void DJIonboardSDK::on_tmr_autoSendStatus()
         plp->plpstatus=1;*/
     if(GPRSConnectflag)
     {
-        GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.altitude,api->getBroadcastData().v.x,plp->plpstatus);
+        GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.height,api->getBroadcastData().v.x,plp->plpstatus);
         //count=1;
     }
 }
@@ -1195,7 +1194,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                         {
                             if(FlightDirectSet.pointData!=NULL)
                             {
-                                delete FlightDirectSet.pointData;
+                                delete []FlightDirectSet.pointData;
                                 FlightDirectSet.pointData=NULL;
                             }
                             FlightDirectSet.pointData=new point[FlightDirectSet.pointnumber];
