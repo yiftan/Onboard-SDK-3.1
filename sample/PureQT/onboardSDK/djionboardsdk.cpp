@@ -335,6 +335,12 @@ void DJIonboardSDK::on_tmr_autoSendStatus()
 
 void DJIonboardSDK::plpMissionCheck()
 {
+    static int sendActivateOk=0;
+    if(sendActivateOk==0&&GPRSConnectflag&&ui->btn_coreSetControl->text()=="Release Control")
+    {
+        GPRSProtocolSend_6(QString("2001"));
+        sendActivateOk=1;
+    }
     if(ProtocolFlag[3])
     {
         switch(CommandData){
@@ -343,11 +349,17 @@ void DJIonboardSDK::plpMissionCheck()
                         ui->radioButton_4->setChecked(true);//Take off
                         //mouseClicked(ui->btn_flight_runTask);
                         on_btn_flight_runTask_clicked();
-                        plp->plpstatus=3;
-                        GPRSProtocolSend_3(CommandData,'Y');
+                        sleepmSec(1000);
+                        if(flight->getStatus()==3)
+                        {
+                            GPRSProtocolSend_3(CommandData,'Y');
+                            GPRSProtocolSend_6(QString("2002"));
+                        }
+                        else
+                        {
+                            GPRSProtocolSend_3(CommandData,'N');
+                        }
                     }
-                    else
-                        GPRSProtocolSend_3(CommandData,'N');
                     break;
             case 2: if(plp->isRunning||plp->getInfo().indexNumber==0)
                         GPRSProtocolSend_3(CommandData,'N');
@@ -364,9 +376,10 @@ void DJIonboardSDK::plpMissionCheck()
                     else
                     {
                         //mouseClicked(ui->btn_Abortplp);//Abort mission
+                        GPRSProtocolSend_3(CommandData,'Y');
                         on_btn_Abortplp_clicked();
                         plp->plpstatus=5;
-                        GPRSProtocolSend_3(CommandData,'Y');
+
                     }
                     break;
             case 4: if(flight->getStatus()==3&&!plp->isRunning)
@@ -375,7 +388,16 @@ void DJIonboardSDK::plpMissionCheck()
                         plp->plpstatus=6;
                         //mouseClicked(ui->btn_flight_runTask);
                         on_btn_flight_runTask_clicked();
-                        GPRSProtocolSend_3(CommandData,'Y');
+                        sleepmSec(1000);
+                        if(flight->getStatus()==4||flight->getStatus()==5)
+                        {
+                            GPRSProtocolSend_3(CommandData,'Y');
+                            GPRSProtocolSend_6(QString("2003"));
+                        }
+                        else
+                        {
+                            GPRSProtocolSend_3(CommandData,'N');
+                        }
                     }
                     else
                         GPRSProtocolSend_3(CommandData,'N');
@@ -387,6 +409,7 @@ void DJIonboardSDK::plpMissionCheck()
                         //mouseClicked(ui->btn_flight_runTask);
                         on_btn_flight_runTask_clicked();
                         GPRSProtocolSend_3(CommandData,'Y');
+                        GPRSProtocolSend_6(QString("2004"));
                     }
                     else
                         GPRSProtocolSend_3(CommandData,'N');
@@ -417,8 +440,13 @@ void DJIonboardSDK::plpMissionCheck()
     }
     if(plp->isStart&&!plp->isRunning)
     {
-        mouseClicked(ui->btn_plp_start_stop);
         plp->isStart=false;
+        //mouseClicked(ui->btn_plp_start_stop);
+        on_btn_plp_start_stop_clicked();
+    }
+    if(plp->plpstatus==8&&flight->getStatus()==1)//go home finnished and landing
+    {
+        plp->plpstatus=1;
     }
 }
 
@@ -460,6 +488,7 @@ void DJIonboardSDK::plpMission()
     {
         plp->plpstatus=7;
         plp->isRunning=false;
+        GPRSProtocolSend_6(QString("4006"));
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
         api->serialDevice->displayLog();
         //flight->task(Flight::TASK_GOHOME);
@@ -3028,6 +3057,7 @@ void DJIonboardSDK::on_btn_AbortWaypoint_clicked()
 
 void DJIonboardSDK::on_btn_plp_init_clicked()
 {
+    GPRSProtocolSend_6(QString("4001"));
     plp->Missionclicked=true;
     on_btn_waypoint_init_clicked();
     sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Waypoint inited");
@@ -3039,6 +3069,7 @@ void DJIonboardSDK::on_btn_plp_loadAll_clicked()
     if(plp->isRunning)
     {
         GPRSProtocolSend_2('N');
+        GPRSProtocolSend_6(QString("4003"));
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Waypoint loaded fialed, mission is running");
         api->serialDevice->displayLog();
         return;
@@ -3056,6 +3087,7 @@ void DJIonboardSDK::on_btn_plp_loadAll_clicked()
         ui->cb_waypoint_point->setCurrentIndex(i + 1);
         on_btn_wp_loadOne_clicked();
     }
+    GPRSProtocolSend_6(QString("4002"));
     plp->plpstatus=2;
     plp->isLoadWayPoint=true;
     plp->Missionclicked=false;
@@ -3243,9 +3275,11 @@ void DJIonboardSDK::on_btn_Abortplp_clicked()
 {
     if(plp->isRunning){
         plp->abortMission=true;
+        GPRSProtocolSend_6(QString("4004"));
     }
     else
     {
+        GPRSProtocolSend_6(QString("4005"));
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Abort failed, mission is not running");
         api->serialDevice->displayLog();
     }
