@@ -2,16 +2,28 @@
 #define POWERLINEPATROL_H
 
 #include "QonboardSDK.h"
+#include <QMainWindow>
+#include <QAbstractButton>
+#include <QTimer>
+#include <QTime>
+#include <QTextStream>
+#include <QHBoxLayout>
+#include <QStandardItemModel>
+#include <QList>
+#include <QFile>
+#include <QComboBox>
+#include <QEventLoop>
+#include <fstream>
 
 namespace DJI
 {
 namespace onboardSDK
 {
 
-class PowerLinePatrol //: public QThread
+class PowerLinePatrol : public QThread
 {
 public:
-    PowerLinePatrol();
+    PowerLinePatrol(CoreAPI *api, Flight *flight);
 
 
     void init(WayPointInitData *Info);
@@ -35,12 +47,27 @@ public:
     bool isGoHome;
     bool isFinished;
     bool stopped;
+    int plpstatus;
+    float setSpeed;
+    float setheight;
+    void plpMission();
+    void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
+    int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
+                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
+    int moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
+    int moveByYawRate(float32_t yawDesired, float32_t zDesired,
+                      int timeoutInMs=6000, float yawThresholdIndeg=0.5, float posDesiredInCm=30);
+    int moveBySpeedBodyFrame(PositionData* targetPosition,
+                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
 private:
     WayPointInitData info;
     WayPointData *index;
     int posindex;
-/*protected:
-    void run();*/
+    PositionData curpos;
+    CoreAPI *api;
+    Flight *flight;
+protected:
+    void run();
 
 };
 
