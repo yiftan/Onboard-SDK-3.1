@@ -181,7 +181,6 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     for(int i=0;i<5;i++){
         ProtocolFlag[i]=false;
     }
-
     GPRSCommand[0]=QString("AT+CGCLASS=\"B\"");
     GPRSCommand[1]=QString("AT+CGDCONT=1,\"IP\",\"CMNET\"");
     GPRSCommand[2]=QString("AT+CGATT=1");
@@ -258,7 +257,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     activateSDKTimer->setInterval(ACTIVEPERIOD);
     connect(activateSDKTimer, SIGNAL(timeout()), this, SLOT(autoActivateSDK()));
     activateGPRSTimer = new QTimer();
-    activateGPRSTimer->setInterval(ACTIVEPERIOD);
+    activateGPRSTimer->setInterval(1000);
     connect(activateGPRSTimer, SIGNAL(timeout()), this, SLOT(autoActivateGPRS()));
     plpTimer = new QTimer();
     plpTimer->setInterval(600);
@@ -335,7 +334,18 @@ void DJIonboardSDK::on_tmr_autoSendStatus()
 
 void DJIonboardSDK::plpMissionCheck()
 {
+    static uint32_t origintime=0;
     static int sendActivateOk=0;
+    uint32_t curtime=api->getTime().time;
+    uint32_t timeinterval=curtime-origintime;
+    origintime=curtime;
+    if(timeinterval==0&&!activateSDKTimer->isActive())
+    {
+        activateSDKTimer->start();
+    }
+    if(!GPRSport->isOpen()&&!activateGPRSTimer->isActive())
+        activateGPRSTimer->start();
+
     if(sendActivateOk==0&&GPRSConnectflag&&ui->btn_coreSetControl->text()=="Release Control")
     {
         GPRSProtocolSend_6(QString("2001"));
@@ -352,6 +362,8 @@ void DJIonboardSDK::plpMissionCheck()
                         sleepmSec(1000);
                         if(flight->getStatus()==3)
                         {
+                            plp->goHome.latitude=api->getBroadcastData().pos.latitude;
+                            plp->goHome.longitude=api->getBroadcastData().pos.longitude;
                             GPRSProtocolSend_3(CommandData,'Y');
                             GPRSProtocolSend_6(QString("2002"));
                         }
@@ -407,7 +419,8 @@ void DJIonboardSDK::plpMissionCheck()
                         ui->radioButton_8->setChecked(true);//Go home
                         plp->plpstatus=8;
                         //mouseClicked(ui->btn_flight_runTask);
-                        on_btn_flight_runTask_clicked();
+                        //on_btn_flight_runTask_clicked();
+                        plp->start();
                         GPRSProtocolSend_3(CommandData,'Y');
                         GPRSProtocolSend_6(QString("2004"));
                     }
@@ -1607,6 +1620,8 @@ void DJIonboardSDK::on_btn_GPRSportSend_clicked()
         autoSendStatus->start();
         ui->btn_GPRSportSend->setText(QString("started"));
     }
+    CommandData=ui->lineEdit_GPRSres->text().toInt();
+    ProtocolFlag[3]=true;
     //GPRSPortCtl();
     //GPRSDATA=ui->lineEdit_GPRSsend->text();
     //GPRSDataSend(GPRSDATA);
@@ -2258,17 +2273,6 @@ void DJIonboardSDK::on_tmr_Broadcast()
     ui->tb_display->verticalScrollBar()->setValue(
         ui->tb_display->verticalScrollBar()->maximum());
     ui->tb_display->repaint();
-    static uint32_t origintime=0;
-    uint32_t curtime=api->getTime().time;
-    uint32_t timeinterval=curtime-origintime;
-    origintime=curtime;
-    if(timeinterval==0&&!activateSDKTimer->isActive())
-    {
-        activateSDKTimer->start();
-    }
-    if(!GPRSport->isOpen()&&!activateGPRSTimer->isActive())
-        activateGPRSTimer->start();
-
 
     // qDebug()<<api->getFilter().recvIndex;
 }
@@ -2703,7 +2707,8 @@ void DJIonboardSDK::initSDK()
     cam = new Camera(api);
     hp = new HotPoint(api);
     wp = new WayPoint(api);
-    plp = new PowerLinePatrol(api,flight);
+    abortMutex = new QMutex();
+    plp = new PowerLinePatrol(api,flight,abortMutex);
     refreshPort();
     setPort();
     setBaudrate();
@@ -3274,7 +3279,9 @@ void DJIonboardSDK::autoActivateSDK()
 void DJIonboardSDK::on_btn_Abortplp_clicked()
 {
     if(plp->isRunning){
+        abortMutex->lock();
         plp->abortMission=true;
+        abortMutex->unlock();
         GPRSProtocolSend_6(QString("4004"));
     }
     else

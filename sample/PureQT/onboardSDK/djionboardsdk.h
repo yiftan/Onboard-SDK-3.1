@@ -24,9 +24,9 @@
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
-#define   SDKCOM  "COM4"
-#define   GPRSCOM "COM8"
-#define   ACTIVEPERIOD 1000
+#define   SDKCOM  "COM8"
+#define   GPRSCOM "COM4"
+#define   ACTIVEPERIOD 1500
 using namespace DJI;
 using namespace DJI::onboardSDK;
 
@@ -409,7 +409,7 @@ private:
 
     QTimer *autoSendStatus;
 
-    int plpstatus;
+    QMutex *abortMutex;
 
 
 

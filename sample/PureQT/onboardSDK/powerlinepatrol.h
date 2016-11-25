@@ -23,7 +23,7 @@ namespace onboardSDK
 class PowerLinePatrol : public QThread
 {
 public:
-    PowerLinePatrol(CoreAPI *api, Flight *flight);
+    PowerLinePatrol(CoreAPI *api, Flight *flight, QMutex *abortMutex);
 
 
     void init(WayPointInitData *Info);
@@ -37,7 +37,7 @@ public:
     WayPointInitData getInfo() const;
     bool Missionclicked;
     bool abortMission;
-    bool isRunning;
+    volatile bool isRunning;
     bool isStart;
     bool isObtainControl;
     bool isLoadWayPoint;
@@ -47,10 +47,14 @@ public:
     bool isGoHome;
     bool isFinished;
     bool stopped;
-    int plpstatus;
+    volatile int plpstatus;
     float setSpeed;
     float setheight;
+    float goHomeSpeed;
+    PositionData goHome;
+    QMutex *abortMutex;
     void plpMission();
+    void goHomeMission();
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
                              int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
@@ -63,7 +67,6 @@ private:
     WayPointInitData info;
     WayPointData *index;
     int posindex;
-    PositionData curpos;
     CoreAPI *api;
     Flight *flight;
 protected:

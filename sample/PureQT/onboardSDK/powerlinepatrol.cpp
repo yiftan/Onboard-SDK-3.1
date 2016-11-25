@@ -4,10 +4,11 @@ using namespace DJI::onboardSDK;
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
-PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
+PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight, QMutex *abortMutex)
 {
     this->api=api;
     this->flight=flight;
+    this->abortMutex=abortMutex;
     index=0;
     plpstatus=1;
     Missionclicked=false;
@@ -24,6 +25,8 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     isStart=false;
     setSpeed=2.0;
     setheight=2.0;
+    goHome.height=100;
+    goHomeSpeed=15;
 }
 void PowerLinePatrol::stop()
 {
@@ -33,7 +36,40 @@ void PowerLinePatrol::run()
 {
     while(!stopped)
     {
-        plpMission();
+        if(plpstatus==8)
+        {
+            goHomeMission();
+        }
+        else
+        {
+            plpMission();
+            if(plpstatus==7)
+            {
+                sprintf(DJI::onboardSDK::buffer, "%s","Auto go home after 20s...");
+                api->serialDevice->displayLog();
+                QTime dieTime = QTime::currentTime().addSecs(20);
+                while(QTime::currentTime() < dieTime)
+                {
+                    abortMutex->lock();
+                    if(abortMission)
+                    {
+                        abortMutex->unlock();
+                        break;
+                    }
+                    abortMutex->unlock();
+                }
+                if(abortMission)
+                {
+                    plpstatus=5;
+                    sprintf(DJI::onboardSDK::buffer, "%s","Auto go home aborted");
+                    api->serialDevice->displayLog();
+                }
+                else
+                {
+                    goHomeMission();
+                }
+            }
+        }
     }
     stopped=false;
     //qDebug()<<QString("PLP Thread stoped");
@@ -90,6 +126,7 @@ bool PowerLinePatrol::uploadIndexData(uint8_t pos)
 
     return true;
 }
+
 void PowerLinePatrol::startMission()
 {
     posindex=0;
@@ -112,6 +149,21 @@ PositionData PowerLinePatrol::nextPosition()
     }
     return pos;
 }
+void PowerLinePatrol::goHomeMission()
+{
+    moveBySpeedBodyFrame(&goHome,6000,0.5,15);
+    if(abortMission)
+    {
+        plpstatus=5;//todo lock
+        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Go home aborted");
+        api->serialDevice->displayLog();
+    }
+    else
+    {
+        flight->task(Flight::TASK_LANDING);
+    }
+}
+
 void PowerLinePatrol::plpMission()
 {
     startMission();
@@ -202,13 +254,22 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       {
           break;
       }
+      abortMutex->lock();
       if(abortMission)
       {
+          abortMutex->unlock();
           break;
       }
+      abortMutex->unlock();
       //MovementControl API call
-
-      flight->setMovementControl(flag,0, 0, zDesired, yawCmd*RAD2DEG);
+      if(fabs(zRemaining) > posDesiredInm)
+      {
+          flight->setMovementControl(flag,0, 0, zDesired, 0);
+      }
+      else
+      {
+          flight->setMovementControl(flag,0, 0, zDesired, yawCmd*RAD2DEG);
+      }
       QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
@@ -255,6 +316,10 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
 
     int elapsedTime = 0;
     float speedFactor = setSpeed;
+    if(plpstatus==8)
+    {
+        speedFactor = goHomeSpeed;
+    }
     float MinSpeed = 0.1;
     Angle radOffset=0;
     double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
@@ -272,7 +337,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
         //Run multiple times to fix the influence of the inertia
         while(cnt--)
         {
-            moveByYawRate(radOffset,curPosition.height);
+            moveByYawRate(radOffset,targetPosition->height);
         }
     }
     while(std::abs(curLocalOffset.x) > posThresholdInM || std::abs(curLocalOffset.y) > posThresholdInM || \
@@ -283,10 +348,14 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       {
           break;
       }
+      abortMutex->lock();
       if(abortMission)
       {
+          abortMutex->unlock();
           break;
       }
+      abortMutex->unlock();
+
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
       QEventLoop eventloop;
@@ -366,10 +435,14 @@ int PowerLinePatrol::moveByPositionBodyFrame(PositionData* targetPosition,int ti
       {
           break;
       }
+      abortMutex->lock();
       if(abortMission)
       {
+          abortMutex->unlock();
           break;
       }
+      abortMutex->unlock();
+
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
       QEventLoop eventloop;
@@ -461,10 +534,14 @@ int PowerLinePatrol::moveByPositionOffset(float32_t xOffsetDesired, float32_t yO
     {
         break;
     }
+    abortMutex->lock();
     if(abortMission)
     {
+        abortMutex->unlock();
         break;
     }
+    abortMutex->unlock();
+
     //MovementControl API call
 
     flight->setMovementControl(flag,xCmd, yCmd, zCmd, yawDesired);
