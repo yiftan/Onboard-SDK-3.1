@@ -20,12 +20,13 @@
 #endif
 #include "QonboardSDK.h"
 #include "powerlinepatrol.h"
+#include "gprs.h"
 
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM4"
-#define   GPRSCOM "COM8"
+#define   GPRSCOM "COM5"
 #define   ACTIVEPERIOD 1000
 using namespace DJI;
 using namespace DJI::onboardSDK;
@@ -56,7 +57,7 @@ class DJIonboardSDK : public QMainWindow
     void refreshPort();
     void GPRSPortCtl();
     void GPRSDataRead();
-    void GPRSDataSend(QString GPRSDATA);
+    //void GPRSDataSend(QString GPRSDATA);
 
     //GPRS PROTOCOL COMMAND
     void GPRSProtocolRead();
@@ -299,6 +300,8 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_plp_start_stop_clicked();
 
+    void on_lineEdit_GPRSsend_textChanged(const QString &text);
+
 private:
 #ifdef GROUNDSTATION
   private:
@@ -319,23 +322,18 @@ private:
     CoreAPI *api;
     QtOnboardsdkPortDriver *driver;
     QSerialPort *port;
+    QByteArray *key;
 
     //GPRS
     QtOnboardsdkPortDriver *GPRSdriver;
     QSerialPort *GPRSport;
-    QByteArray *key;
     QString GPRSBUF;
-    QStringList GPRSSendBufComm;
-    QStringList GPRSSendBufData;
-    QStringList GPRSSendBufHD;
     QString GPRSCommand[7];
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
-    volatile bool GPRSSendLock;
     int GPRSflag;
     int GPRSst;
     int GPRSConnectflag;
-    int GPRSSendflag;
     QString ProtocolHead;
     bool ProtocolFlag[5];/*协议解析结果
                           (0:飞行器参数状态查询;
@@ -362,6 +360,7 @@ private:
                       3:终止任务;
                       4:降落;
                       5:返航)*/
+    GPRSSendMessage *gprs;
 
     Flight *flight;
     uint8_t flightFlag;
@@ -411,8 +410,10 @@ private:
 
     int plpstatus;
 
+signals:
+    void GPRSDataSend(const QString &s);
 
-
+private:
 #ifdef SDK_DEV
     UIDev *dev;
 #endif // SDK_DEV
