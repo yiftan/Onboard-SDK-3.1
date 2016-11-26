@@ -8,6 +8,8 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
 {
     this->api=api;
     this->flight=flight;
+    index=0;
+    plpstatus=1;
     Missionclicked=false;
     abortMission=false;
     isRunning=false;
@@ -48,8 +50,10 @@ void PowerLinePatrol::setInfo(const WayPointInitData &value)
     info = value;
     for (int i = 0; i < 16; ++i) info.reserved[i] = 0;
     if (index != 0)
-        delete index;
-    index = 0;
+    {
+        delete []index;
+        index = NULL;
+    }
 }
 
 WayPointInitData PowerLinePatrol::getInfo() const
