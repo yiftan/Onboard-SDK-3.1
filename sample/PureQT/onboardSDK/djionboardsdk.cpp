@@ -1040,6 +1040,7 @@ void DJIonboardSDK::GPRSPortCtl()
                 GPRSst=0;
                 cnt=0;
                 GPRSflag=0;
+                emit GPRSDataSend("ATE1");
             }
         }
         else //if(!GPRSBUF.isEmpty())
@@ -1059,6 +1060,7 @@ void DJIonboardSDK::GPRSPortCtl()
         {
             GPRSst=2;
             cnt=0;
+            emit GPRSDataSend("ATE0");
         }
         else if((GPRSBUF.contains("ERROR",Qt::CaseSensitive)&&GPRSBUF.contains(GPRSCommand[GPRSflag],Qt::CaseSensitive)))
         {
@@ -1075,6 +1077,7 @@ void DJIonboardSDK::GPRSPortCtl()
                     GPRSst=0;
                     cnt=0;
                     GPRSflag=0;
+                    emit GPRSDataSend("ATE1");
                 }
             }
         }
@@ -1088,6 +1091,7 @@ void DJIonboardSDK::GPRSPortCtl()
             GPRSst=0;
             cnt=0;
             GPRSflag=0;
+            emit GPRSDataSend("ATE1");
         }
     }
     else if(GPRSst==2)
@@ -1105,7 +1109,10 @@ void DJIonboardSDK::GPRSProtocolRead()
     if(GPRSConnectflag==1&&GPRSBUF!=NULL)
     //if(GPRSBUF!=NULL)
     {
-        if(!(GPRSBUF.contains("SEND",Qt::CaseSensitive)||GPRSBUF.contains("AT",Qt::CaseSensitive)))
+        GPRSBUF.remove(">");
+        GPRSBUF.remove("SEND OK");
+        GPRSBUF=GPRSBUF.simplified();
+        if(!GPRSBUF.contains("SEND",Qt::CaseSensitive))
         {
             char X=GPRSBUF[0].toLatin1();
             for(int i=1;i<GPRSBUF.length()-1;i++)
