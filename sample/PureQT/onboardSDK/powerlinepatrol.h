@@ -53,6 +53,7 @@ public:
     float goHomeSpeed;
     PositionData goHome;
     QMutex *abortMutex;
+    QMutex *statusMutex;
     void plpMission();
     void goHomeMission();
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);

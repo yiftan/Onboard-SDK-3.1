@@ -27,6 +27,7 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight, QMutex *abortMute
     setheight=2.0;
     goHome.height=100;
     goHomeSpeed=15;
+    statusMutex = new QMutex();
 }
 void PowerLinePatrol::stop()
 {
@@ -39,6 +40,14 @@ void PowerLinePatrol::run()
         if(plpstatus==8)
         {
             goHomeMission();
+            while(flight->getStatus()==4||flight->getStatus()==5)
+                ;
+            if(flight->getStatus()==1)
+            {
+                statusMutex->lock();
+                plpstatus=1;
+                statusMutex->unlock();
+            }
         }
         else
         {
@@ -58,15 +67,28 @@ void PowerLinePatrol::run()
                     }
                     abortMutex->unlock();
                 }
+                abortMutex->lock();
                 if(abortMission)
                 {
+                    abortMutex->unlock();
+                    statusMutex->lock();
                     plpstatus=5;
+                    statusMutex->unlock();
                     sprintf(DJI::onboardSDK::buffer, "%s","Auto go home aborted");
                     api->serialDevice->displayLog();
                 }
                 else
                 {
+                    abortMutex->unlock();
                     goHomeMission();
+                    while(flight->getStatus()==4||flight->getStatus()==5)
+                        ;
+                    if(flight->getStatus()==1)
+                    {
+                        statusMutex->lock();
+                        plpstatus=1;
+                        statusMutex->unlock();
+                    }
                 }
             }
         }
@@ -152,15 +174,23 @@ PositionData PowerLinePatrol::nextPosition()
 void PowerLinePatrol::goHomeMission()
 {
     moveBySpeedBodyFrame(&goHome,6000,0.5,15);
+    abortMutex->lock();
     if(abortMission)
     {
-        plpstatus=5;//todo lock
+        abortMutex->unlock();
+        statusMutex->lock();
+        plpstatus=5;
+        statusMutex->unlock();
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Go home aborted");
         api->serialDevice->displayLog();
     }
     else
     {
+        abortMutex->unlock();
         flight->task(Flight::TASK_LANDING);
+        statusMutex->lock();
+        plpstatus=6;
+        statusMutex->unlock();
     }
 }
 
@@ -185,14 +215,19 @@ void PowerLinePatrol::plpMission()
             //moveByPositionBodyFrame(&nextPos);
             moveBySpeedBodyFrame(&nextPos);
         }
+        abortMutex->lock();
         if(abortMission)
         {
+            abortMutex->unlock();
             break;
         }
+        abortMutex->unlock();
         nextPos=nextPosition();
     }
+    abortMutex->lock();
     if(abortMission)
     {
+        abortMutex->unlock();
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Mission aborted");
         api->serialDevice->displayLog();
         abortMission=false;
@@ -200,7 +235,10 @@ void PowerLinePatrol::plpMission()
     }
     else
     {
+        abortMutex->unlock();
+        statusMutex->lock();
         plpstatus=7;
+        statusMutex->unlock();
         isRunning=false;
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
         api->serialDevice->displayLog();
