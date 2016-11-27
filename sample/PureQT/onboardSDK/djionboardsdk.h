@@ -25,8 +25,8 @@
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
-#define   SDKCOM  "COM8"
-#define   GPRSCOM "COM4"
+#define   SDKCOM  "COM4"
+#define   GPRSCOM "COM8"
 #define   ACTIVEPERIOD 1500
 using namespace DJI;
 using namespace DJI::onboardSDK;
@@ -125,6 +125,7 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_portRefresh_clicked();
     void on_btn_portOpen_clicked();
     void on_comboBox_portName_currentIndexChanged(int index);
+    void logSignalRecv(const QString &log);
 
     void on_btn_coreSet_clicked();
     void on_btn_coreActive_clicked();
@@ -408,10 +409,11 @@ private:
 
     QTimer *autoSendStatus;
 
-    QMutex *abortMutex;
+    bool abortMission;
 
 signals:
     void GPRSDataSend(const QString &s);
+    void abortEmit(const QString &abortMission);
 
 private:
 #ifdef SDK_DEV

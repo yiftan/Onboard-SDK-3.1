@@ -14,6 +14,8 @@
 #include <QComboBox>
 #include <QEventLoop>
 #include <fstream>
+#include "QonboardSDK.h"
+#include <QCoreApplication>
 
 namespace DJI
 {
@@ -22,9 +24,9 @@ namespace onboardSDK
 
 class PowerLinePatrol : public QThread
 {
+    Q_OBJECT
 public:
-    PowerLinePatrol(CoreAPI *api, Flight *flight, QMutex *abortMutex);
-
+    PowerLinePatrol(CoreAPI *api, Flight *flight);
 
     void init(WayPointInitData *Info);
     void setInfo(const WayPointInitData &value);
@@ -52,10 +54,10 @@ public:
     float setheight;
     float goHomeSpeed;
     PositionData goHome;
-    QMutex *abortMutex;
     QMutex *statusMutex;
     void plpMission();
     void goHomeMission();
+    void sleepmSec(int mSec);
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
                              int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
@@ -64,14 +66,19 @@ public:
                       int timeoutInMs=6000, float yawThresholdIndeg=0.5, float posDesiredInCm=30);
     int moveBySpeedBodyFrame(PositionData* targetPosition,
                              int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
+public slots:
+    void abortSignalSlot(const QString &abortMission);
 private:
     WayPointInitData info;
     WayPointData *index;
     int posindex;
     CoreAPI *api;
     Flight *flight;
+    QString log;
 protected:
     void run();
+signals:
+    void emitLog(const QString &log);
 
 };
 

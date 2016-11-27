@@ -4,11 +4,10 @@ using namespace DJI::onboardSDK;
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
-PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight, QMutex *abortMutex)
+PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
 {
     this->api=api;
     this->flight=flight;
-    this->abortMutex=abortMutex;
     index=0;
     plpstatus=1;
     Missionclicked=false;
@@ -27,6 +26,8 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight, QMutex *abortMute
     setheight=2.0;
     goHome.height=100;
     goHomeSpeed=15;
+    goHome.latitude=30.265750643;
+    goHome.longitude=120.11965452;
     statusMutex = new QMutex();
 }
 void PowerLinePatrol::stop()
@@ -40,9 +41,10 @@ void PowerLinePatrol::run()
         if(plpstatus==8)
         {
             goHomeMission();
-            while(flight->getStatus()==4||flight->getStatus()==5)
-                ;
-            if(flight->getStatus()==1)
+            int st=flight->getStatus();
+            while(st==3||st==4||st==5)
+                st=flight->getStatus();
+            if(st==1)
             {
                 statusMutex->lock();
                 plpstatus=1;
@@ -51,47 +53,49 @@ void PowerLinePatrol::run()
         }
         else
         {
-            plpMission();
-            if(plpstatus==7)
+            //if(isRunning==false)
             {
-                sprintf(DJI::onboardSDK::buffer, "%s","Auto go home after 20s...");
-                api->serialDevice->displayLog();
-                QTime dieTime = QTime::currentTime().addSecs(20);
-                while(QTime::currentTime() < dieTime)
+                plpMission();
+                if(plpstatus==7)
                 {
-                    abortMutex->lock();
+                    log="4007";
+                    emitLog(QString(log));
+                    sprintf(DJI::onboardSDK::buffer, "%s","Auto go home after 20s...");
+                    api->serialDevice->displayLog();
+                    QTime dieTime = QTime::currentTime().addSecs(20);
+                    while(QTime::currentTime() < dieTime)
+                    {
+                        if(abortMission)
+                        {
+                            break;
+                        }
+                    }
                     if(abortMission)
                     {
-                        abortMutex->unlock();
-                        break;
-                    }
-                    abortMutex->unlock();
-                }
-                abortMutex->lock();
-                if(abortMission)
-                {
-                    abortMutex->unlock();
-                    statusMutex->lock();
-                    plpstatus=5;
-                    statusMutex->unlock();
-                    sprintf(DJI::onboardSDK::buffer, "%s","Auto go home aborted");
-                    api->serialDevice->displayLog();
-                }
-                else
-                {
-                    abortMutex->unlock();
-                    goHomeMission();
-                    while(flight->getStatus()==4||flight->getStatus()==5)
-                        ;
-                    if(flight->getStatus()==1)
-                    {
                         statusMutex->lock();
-                        plpstatus=1;
+                        plpstatus=5;
                         statusMutex->unlock();
+                        log="4008";
+                        emitLog(log);
+                        sprintf(DJI::onboardSDK::buffer, "%s","Auto go home aborted");
+                        api->serialDevice->displayLog();
+                    }
+                    else
+                    {
+                        goHomeMission();
+                        while(flight->getStatus()==4||flight->getStatus()==5)
+                            ;
+                        if(flight->getStatus()==1)
+                        {
+                            statusMutex->lock();
+                            plpstatus=1;
+                            statusMutex->unlock();
+                        }
                     }
                 }
             }
         }
+        //msleep(1000);
     }
     stopped=false;
     //qDebug()<<QString("PLP Thread stoped");
@@ -149,6 +153,13 @@ bool PowerLinePatrol::uploadIndexData(uint8_t pos)
     return true;
 }
 
+void PowerLinePatrol::sleepmSec(int mSec)
+{
+    QTime dieTime = QTime::currentTime().addMSecs(mSec);
+    while( QTime::currentTime() <dieTime )
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+}
+
 void PowerLinePatrol::startMission()
 {
     posindex=0;
@@ -174,19 +185,18 @@ PositionData PowerLinePatrol::nextPosition()
 void PowerLinePatrol::goHomeMission()
 {
     moveBySpeedBodyFrame(&goHome,6000,0.5,15);
-    abortMutex->lock();
     if(abortMission)
     {
-        abortMutex->unlock();
         statusMutex->lock();
         plpstatus=5;
         statusMutex->unlock();
+        log="4009";
+        emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Go home aborted");
         api->serialDevice->displayLog();
     }
     else
     {
-        abortMutex->unlock();
         flight->task(Flight::TASK_LANDING);
         statusMutex->lock();
         plpstatus=6;
@@ -200,6 +210,8 @@ void PowerLinePatrol::plpMission()
     PositionData nextPos=nextPosition();
     while(nextPos.health)
     {
+        log="300"+QString(QString::number(nextPos.health));
+        emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s%d","PLPMission, Fly to point ",nextPos.health);
         api->serialDevice->displayLog();
         //GPRSProtocolSend_6(QString("300"+QString(QString::number(nextPos.health))));
@@ -215,19 +227,14 @@ void PowerLinePatrol::plpMission()
             //moveByPositionBodyFrame(&nextPos);
             moveBySpeedBodyFrame(&nextPos);
         }
-        abortMutex->lock();
         if(abortMission)
         {
-            abortMutex->unlock();
             break;
         }
-        abortMutex->unlock();
         nextPos=nextPosition();
     }
-    abortMutex->lock();
     if(abortMission)
     {
-        abortMutex->unlock();
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Mission aborted");
         api->serialDevice->displayLog();
         abortMission=false;
@@ -235,11 +242,12 @@ void PowerLinePatrol::plpMission()
     }
     else
     {
-        abortMutex->unlock();
         statusMutex->lock();
         plpstatus=7;
         statusMutex->unlock();
         isRunning=false;
+        log="4006";
+        emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
         api->serialDevice->displayLog();
         //flight->task(Flight::TASK_GOHOME);
@@ -292,13 +300,10 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       {
           break;
       }
-      abortMutex->lock();
       if(abortMission)
       {
-          abortMutex->unlock();
           break;
       }
-      abortMutex->unlock();
       //MovementControl API call
       if(fabs(zRemaining) > posDesiredInm)
       {
@@ -386,20 +391,18 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       {
           break;
       }
-      abortMutex->lock();
       if(abortMission)
       {
-          abortMutex->unlock();
           break;
       }
-      abortMutex->unlock();
 
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
       QEventLoop eventloop;
-      QTimer::singleShot(20, &eventloop, SLOT(quit()));
+     /* QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
-      elapsedTime += 20;
+      elapsedTime += 20;*/
+      msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
@@ -473,20 +476,18 @@ int PowerLinePatrol::moveByPositionBodyFrame(PositionData* targetPosition,int ti
       {
           break;
       }
-      abortMutex->lock();
       if(abortMission)
       {
-          abortMutex->unlock();
           break;
       }
-      abortMutex->unlock();
 
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
       QEventLoop eventloop;
-      QTimer::singleShot(20, &eventloop, SLOT(quit()));
+      /*QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
-      elapsedTime += 20;
+      elapsedTime += 20;*/
+      msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
@@ -572,22 +573,20 @@ int PowerLinePatrol::moveByPositionOffset(float32_t xOffsetDesired, float32_t yO
     {
         break;
     }
-    abortMutex->lock();
     if(abortMission)
     {
-        abortMutex->unlock();
         break;
     }
-    abortMutex->unlock();
 
     //MovementControl API call
 
     flight->setMovementControl(flag,xCmd, yCmd, zCmd, yawDesired);
 
     //sleep(20)
-    QEventLoop eventloop;
+    /*QEventLoop eventloop;
     QTimer::singleShot(20, &eventloop, SLOT(quit()));
-    eventloop.exec();
+    eventloop.exec();*/
+    msleep(20);
 
     elapsedTime += 20;
 
@@ -610,4 +609,9 @@ int PowerLinePatrol::moveByPositionOffset(float32_t xOffsetDesired, float32_t yO
 
   }
   return 1;
+}
+void PowerLinePatrol::abortSignalSlot(const QString &abortMission)
+{
+    if(!abortMission.isEmpty())
+        this->abortMission=true;
 }

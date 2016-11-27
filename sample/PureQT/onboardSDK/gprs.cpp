@@ -19,7 +19,7 @@ void GPRSSendMessage::run()
     while(!stopped)
     {
         GPRSDataSend();
-        msleep(200);
+        msleep(900);
     }
     stopped=false;
 }
@@ -31,19 +31,9 @@ void GPRSSendMessage::GPRSDataSend()
     QByteArray ba;
     QStringList GPRSDATA;
     QString head="Send: ";
-    if(!Message.isEmpty())
-        Message+="\r";
+
     char* tmp;
-    if(Message.contains("H=U=L=",Qt::CaseSensitive))
-    {
-        GPRSSendBufHD.append(Message);
-        Message.clear();
-    }
-    else if(!Message.isEmpty())
-    {
-        GPRSSendBufData.append(Message);
-        Message.clear();
-    }
+
     if((!GPRSSendBufData.isEmpty()))
     {
         if(GPRSSendBufData[0].contains("AT+CIPSEND",Qt::CaseSensitive))
@@ -61,6 +51,15 @@ void GPRSSendMessage::GPRSDataSend()
                 GPRSDATA.clear();
                 flag=1;
             }
+        }
+        else if(GPRSSendBufData[0].contains("ATE0",Qt::CaseSensitive))
+        {
+            ba = GPRSSendBufData[0].toLatin1();
+            tmp=ba.data();
+
+            GPRSDATA_len = GPRSdriver->charsend(tmp, GPRSSendBufData[0].length());
+            msleep(1000);
+            flag=1;
         }
         else
         {
@@ -108,5 +107,17 @@ void GPRSSendMessage::GPRSDataSend()
 void GPRSSendMessage::GPRSSignalRev(const QString &s)
 {
     Message=s;
+    if(!Message.isEmpty())
+        Message+="\r";
+    if(Message.contains("H=U=L=",Qt::CaseSensitive))
+    {
+        GPRSSendBufHD.append(Message);
+        Message.clear();
+    }
+    else if(!Message.isEmpty())
+    {
+        GPRSSendBufData.append(Message);
+        Message.clear();
+    }
 }
 
