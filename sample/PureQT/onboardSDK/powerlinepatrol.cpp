@@ -184,9 +184,9 @@ void PowerLinePatrol::goHomeMission()
         statusMutex->unlock();
         log="4009";
         emitLog(log);
-        abortMission=false;
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Go home aborted");
         api->serialDevice->displayLog();
+        abortMission=false;
     }
     else
     {
@@ -312,6 +312,7 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
+      //msleep(20);
 
       elapsedTime += 20;
 
@@ -479,9 +480,9 @@ int PowerLinePatrol::moveByPositionBodyFrame(PositionData* targetPosition,int ti
 
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
-      QEventLoop eventloop;
+      /*QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
-      eventloop.exec();
+      eventloop.exec();*/
       elapsedTime += 20;
       //msleep(20);
       //Get current position in required coordinates and units
@@ -579,9 +580,9 @@ int PowerLinePatrol::moveByPositionOffset(float32_t xOffsetDesired, float32_t yO
     flight->setMovementControl(flag,xCmd, yCmd, zCmd, yawDesired);
 
     //sleep(20)
-    QEventLoop eventloop;
+    /*QEventLoop eventloop;
     QTimer::singleShot(20, &eventloop, SLOT(quit()));
-    eventloop.exec();
+    eventloop.exec();*/
     //msleep(20);
 
     elapsedTime += 20;

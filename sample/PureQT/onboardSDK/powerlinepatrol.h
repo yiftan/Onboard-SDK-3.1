@@ -60,12 +60,12 @@ public:
     void sleepmSec(int mSec);
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
-                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
+                             int timeoutInMs=60000, float yawThresholdInDeg=1, float posThresholdInCm=30.0);
     int moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
     int moveByYawRate(float32_t yawDesired, float32_t zDesired,
-                      int timeoutInMs=6000, float yawThresholdIndeg=0.5, float posDesiredInCm=30);
+                      int timeoutInMs=6000, float yawThresholdIndeg=1, float posDesiredInCm=30);
     int moveBySpeedBodyFrame(PositionData* targetPosition,
-                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
+                             int timeoutInMs=60000, float yawThresholdInDeg=1, float posThresholdInCm=30);
 public slots:
     void abortSignalSlot(const QString &abortMission);
 private:

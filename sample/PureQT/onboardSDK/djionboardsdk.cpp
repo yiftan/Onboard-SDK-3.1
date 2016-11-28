@@ -326,9 +326,9 @@ void DJIonboardSDK::on_tmr_autoSendStatus()
     /*if(flight->getStatus()==1)
         plp->plpstatus=1;*/
     int plpstatus;
-    plp->statusMutex->lock();
+    //plp->statusMutex->lock();
     plpstatus=plp->plpstatus;
-    plp->statusMutex->unlock();
+    //plp->statusMutex->unlock();
     if(GPRSConnectflag)
     {
         GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.height,api->getBroadcastData().v.x,plpstatus);
