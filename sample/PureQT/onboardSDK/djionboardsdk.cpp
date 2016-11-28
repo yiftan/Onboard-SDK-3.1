@@ -24,13 +24,14 @@ int my_callback(int data_type, int data_len, char *content)
     {
         obstacle_distance *oa = (obstacle_distance*)content;
 		distance_front = oa->distance[1];
-       printf( "obstacle distance:" );
+     /*  printf( "obstacle distance:" );
 
         for ( int i = 0; i < CAMERA_PAIR_NUM; ++i )
             printf( " %f ", 0.01f * oa->distance[i] );
 
         printf( "\n" );
         printf( "frame index:%d,stamp:%d\n", oa->frame_index, oa->time_stamp );
+		*/
     }
     p.set_event();
     p.leave();
@@ -96,8 +97,8 @@ void DJIonboardSDK::guidanceTest(){
 
 void DJIonboardSDK::guidance(){
 	guidance_obstacle = new QTimer();
-	guidance_obstacle->setInterval(100); // 5Hz
-	connect(vrcSend, SIGNAL(timeout()), this, SLOT(guidanceTest()));
+	guidance_obstacle->setInterval(100); // 10Hz
+	connect(guidance_obstacle, SIGNAL(timeout()), this, SLOT(guidanceTest()));
 
 }
 
@@ -296,6 +297,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     initWayPoint();
     initVirtualRC();
     initGPRS();
+	guidance();////
 #ifdef GROUNDSTATION
     initGroundStation();
 #endif // GROUNDSTATION
