@@ -14,15 +14,16 @@
 #include <QDebug>
 #include "DJI_utility.h"
 #include "DJI_guidance.h"
-#pragma comment(lib,"F:/QT_project/Onboard-SDK-3.1/sample/PureQT/onboardSDK/DJI_guidance.lib")
 using namespace std;
 PowerLinePatrol p;
+//unsigned short distance_front;
 int my_callback(int data_type, int data_len, char *content)
 {
     p.enter();
     if ( e_obstacle_distance == data_type && NULL != content )
     {
         obstacle_distance *oa = (obstacle_distance*)content;
+		distance_front = oa->distance[1];
        printf( "obstacle distance:" );
 
         for ( int i = 0; i < CAMERA_PAIR_NUM; ++i )
@@ -61,33 +62,43 @@ std::ostream& operator<<(std::ostream& out, const e_sdk_err_code value){
     return out << s;
 }
 
-#define RETURN_IF_ERR(err_code) { if( err_code ){ release_transfer(); \
-std::cout<<"Error: "<<(e_sdk_err_code)err_code<<" at "<<__LINE__<<","<<__FILE__<<std::endl; return -1;}}
 
-int DJIonboardSDK::guidanceTest(){
+void DJIonboardSDK::guidanceTest(){
     reset_config();  // clear all data subscription
         int err_code = init_transfer(); //wait for board ready and init transfer thread
-        RETURN_IF_ERR( err_code );
+		qDebug() << err_code;
+
+      //  RETURN_IF_ERR( err_code );
         select_obstacle_distance();
         user_call_back ucb=my_callback;
         err_code = set_sdk_event_handler( ucb );
-        RETURN_IF_ERR( err_code );
+		qDebug() << err_code;
+       // RETURN_IF_ERR( err_code );
         err_code = start_transfer();
-        RETURN_IF_ERR( err_code );
+     //   RETURN_IF_ERR( err_code );
 
+		qDebug() << err_code;
 
-
-        while(1)
-        {
-            p.wait_event();
-        }
+     
+        p.wait_event();
+     
 
         err_code = stop_transfer();
-        RETURN_IF_ERR( err_code );
+		qDebug() << err_code;
+        //RETURN_IF_ERR( err_code );
         //make sure the ack packet from GUIDANCE is received
         //sleep( 1000000 );
         err_code = release_transfer();
-        RETURN_IF_ERR( err_code );
+		qDebug() << err_code;
+      //  RETURN_IF_ERR( err_code );
+
+}
+
+void DJIonboardSDK::guidance(){
+	guidance_obstacle = new QTimer();
+	guidance_obstacle->setInterval(100); // 5Hz
+	connect(vrcSend, SIGNAL(timeout()), this, SLOT(guidanceTest()));
+
 }
 
 void DJIonboardSDK::initFollow()
@@ -508,16 +519,20 @@ void DJIonboardSDK::plpMission()
         api->serialDevice->displayLog();
         GPRSProtocolSend_6(QString("300"+QString(QString::number(nextPos.health))));
         //control yaw in ground frame, then control position in body frame, position offset calculated from gps.
-        if(nextPos.health==plp->getInfo().indexNumber)
-        {
-            //moveByPositionBodyFrame(&nextPos,60000,0.5,15);
-            moveBySpeedBodyFrame(&nextPos,60000,0.5,15);
+		if (nextPos.health == plp->getInfo().indexNumber)
+		{
+			//moveByPositionBodyFrame(&nextPos,60000,0.5,15);
+			moveBySpeedBodyFrame(&nextPos, 60000, 0.5, 15);
 
-        }
+
+		}
+    
         else
         {
             //moveByPositionBodyFrame(&nextPos);
             moveBySpeedBodyFrame(&nextPos);
+
+		
         }
         if(plp->abortMission)
         {
@@ -670,7 +685,14 @@ int DJIonboardSDK::moveBySpeedBodyFrame(PositionData* targetPosition, int timeou
           break;
       }
       //MovementControl API call
-      flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
+	 
+
+
+
+	  //obstacle_avoidance
+    //飞行之前做避障判断
+	  
+	  flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
       sleepmSec(20);
       elapsedTime += 20;
       //Get current position in required coordinates and units
@@ -1871,11 +1893,12 @@ void DJIonboardSDK::flightSend()
     flight->control(flightFlag, flightX, flightY, flightZ, flightYaw);
 }
 
-void DJIonboardSDK::on_btn_flight_send_clicked()
+/*void DJIonboardSDK::on_btn_flight_send_clicked()
 {
     flightSend();
 	guidanceTest();
-}
+}*/
+
 
 void DJIonboardSDK::filght_autosend()
 {

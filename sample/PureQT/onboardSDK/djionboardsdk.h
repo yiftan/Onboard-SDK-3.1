@@ -45,7 +45,8 @@ class DJIonboardSDK : public QMainWindow
     void releaseControl();
 
   private:
-	int guidanceTest();
+//	int guidanceTest();
+	  void DJIonboardSDK::guidance();
     void setBaudrate();
     void setGPRSBaudrate();
     void setPort();
@@ -114,6 +115,10 @@ class DJIonboardSDK : public QMainWindow
     int moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
     int moveByYawRate(float32_t yawDesired, float32_t zDesired, int timeoutInMs=60000, float yawThresholdIndeg=0.5, float posDesiredInCm=10);
     int moveBySpeedBodyFrame(PositionData* targetPosition, int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=35.0);
+
+
+
+
     void sleepmSec(int mSec);
     void mouseClicked(QWidget* wid);
 
@@ -183,7 +188,7 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_flight_frount_pressed();
     void on_btn_flight_back_pressed();
-    void on_btn_flight_send_clicked();
+   // void on_btn_flight_send_clicked();
     void on_btn_flight_runTask_clicked();
     void on_btn_flight_arm_clicked(bool checked);
     void on_btn_flight_up_pressed();
@@ -300,6 +305,8 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_plp_start_stop_clicked();
 
+	void guidanceTest();
+
 private:
 #ifdef GROUNDSTATION
   private:
@@ -411,6 +418,7 @@ private:
 
     int plpstatus;
 
+	QTimer *guidance_obstacle;
 
 
 #ifdef SDK_DEV

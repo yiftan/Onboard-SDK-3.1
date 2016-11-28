@@ -26,7 +26,7 @@ class PowerLinePatrol : public QThread
 {
 public:
     PowerLinePatrol(CoreAPI *api, Flight *flight);
-	~PowerLinePatrol();
+	PowerLinePatrol();
 
     void init(WayPointInitData *Info);
     void setInfo(const WayPointInitData &value);
@@ -65,6 +65,11 @@ public:
                       int timeoutInMs=6000, float yawThresholdIndeg=0.5, float posDesiredInCm=30);
     int moveBySpeedBodyFrame(PositionData* targetPosition,
                              int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
+	int moveByPositionZDesired(float32_t zDesired, int timeoutInMs = 60000, float posThresholdInCm = 30);
+	int moveByPositionXOffset(float32_t xOffsetDesired, int timeoutInMs = 60000, float posThresholdInCm = 30);
+	int moveByPositionZOffset(float32_t zOffsetDesired, int timeoutInMs, float posThresholdInCm);
+//	int guidanceTest();
+	int PowerLinePatrol::obstacle(int health);
 private:
     WayPointInitData info;
     WayPointData *index;
