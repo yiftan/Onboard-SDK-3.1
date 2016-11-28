@@ -40,16 +40,9 @@ void PowerLinePatrol::run()
     {
         if(plpstatus==8)
         {
+            isRunning=true;
             goHomeMission();
-            int st=flight->getStatus();
-            while(st==3||st==4||st==5)
-                st=flight->getStatus();
-            if(st==1)
-            {
-                statusMutex->lock();
-                plpstatus=1;
-                statusMutex->unlock();
-            }
+            isRunning=false;
         }
         else
         {
@@ -82,19 +75,15 @@ void PowerLinePatrol::run()
                     }
                     else
                     {
+                        isRunning=true;
                         goHomeMission();
-                        while(flight->getStatus()==4||flight->getStatus()==5)
-                            ;
-                        if(flight->getStatus()==1)
-                        {
-                            statusMutex->lock();
-                            plpstatus=1;
-                            statusMutex->unlock();
-                        }
+                        isRunning=false;
                     }
                 }
+                isRunning=false;
             }
         }
+        stopped=true;
         //msleep(1000);
     }
     stopped=false;
@@ -184,6 +173,9 @@ PositionData PowerLinePatrol::nextPosition()
 }
 void PowerLinePatrol::goHomeMission()
 {
+    statusMutex->lock();
+    plpstatus=8;
+    statusMutex->unlock();
     moveBySpeedBodyFrame(&goHome,6000,0.5,15);
     if(abortMission)
     {
@@ -192,6 +184,7 @@ void PowerLinePatrol::goHomeMission()
         statusMutex->unlock();
         log="4009";
         emitLog(log);
+        abortMission=false;
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Go home aborted");
         api->serialDevice->displayLog();
     }
@@ -201,6 +194,10 @@ void PowerLinePatrol::goHomeMission()
         statusMutex->lock();
         plpstatus=6;
         statusMutex->unlock();
+        log="2002";
+        emitLog(log);
+        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Landing");
+        api->serialDevice->displayLog();
     }
 }
 
@@ -245,7 +242,7 @@ void PowerLinePatrol::plpMission()
         statusMutex->lock();
         plpstatus=7;
         statusMutex->unlock();
-        isRunning=false;
+        //isRunning=false;
         log="4006";
         emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
@@ -256,7 +253,6 @@ void PowerLinePatrol::plpMission()
     sleepmSec(1000);
     on_btn_coreSetControl_clicked();*/
     //flight->task(Flight::TASK_GOHOME);
-    stopped=true;
 }
 
 void PowerLinePatrol::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
@@ -399,10 +395,10 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
       QEventLoop eventloop;
-     /* QTimer::singleShot(20, &eventloop, SLOT(quit()));
+      QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
-      elapsedTime += 20;*/
-      msleep(20);
+      elapsedTime += 20;
+      //msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
@@ -484,10 +480,10 @@ int PowerLinePatrol::moveByPositionBodyFrame(PositionData* targetPosition,int ti
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
       QEventLoop eventloop;
-      /*QTimer::singleShot(20, &eventloop, SLOT(quit()));
+      QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
-      elapsedTime += 20;*/
-      msleep(20);
+      elapsedTime += 20;
+      //msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
@@ -583,10 +579,10 @@ int PowerLinePatrol::moveByPositionOffset(float32_t xOffsetDesired, float32_t yO
     flight->setMovementControl(flag,xCmd, yCmd, zCmd, yawDesired);
 
     //sleep(20)
-    /*QEventLoop eventloop;
+    QEventLoop eventloop;
     QTimer::singleShot(20, &eventloop, SLOT(quit()));
-    eventloop.exec();*/
-    msleep(20);
+    eventloop.exec();
+    //msleep(20);
 
     elapsedTime += 20;
 
