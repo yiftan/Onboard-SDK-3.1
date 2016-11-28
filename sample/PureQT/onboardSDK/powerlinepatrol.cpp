@@ -374,11 +374,12 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
 	  //if(前方有障碍）
 	  //记录当前的高度信息
 	  //break
-	  if (distance_front < 2){
+	/*  if (distance_front < 2){
 
 		  break;
 
 	  }
+	  */
 
       flight->setMovementControl(flag,0, 0, zDesired, yawCmd*RAD2DEG);
       QEventLoop eventloop;
@@ -461,7 +462,11 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       }
       //MovementControl API call
 
-	
+	  if (distance_front < 2){
+
+		  break;
+
+	  }
 
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
       QEventLoop eventloop;
@@ -873,7 +878,10 @@ int PowerLinePatrol::obstacle(int health){
 	int t = 0;
 	if (health == 2){
 		PositionData curPosition = api->getBroadcastData().pos;
+	     float32_t z = curPosition.height;
+		if (z > 2 && z < 5){
 			t = 1;
+		}
 	}
 	return t;
 
