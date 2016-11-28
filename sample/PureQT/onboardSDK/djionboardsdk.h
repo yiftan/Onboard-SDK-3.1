@@ -46,7 +46,7 @@ class DJIonboardSDK : public QMainWindow
 
   private:
 //	int guidanceTest();
-	  void DJIonboardSDK::guidance();
+    void guidance();
     void setBaudrate();
     void setGPRSBaudrate();
     void setPort();
