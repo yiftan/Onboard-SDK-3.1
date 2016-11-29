@@ -3,6 +3,7 @@ using namespace DJI::onboardSDK;
 
 
 unsigned short distance_front;
+unsigned short distance_down;
 #include "DJI_utility.h"
 #include "DJI_guidance.h"
 
@@ -267,11 +268,12 @@ void PowerLinePatrol::plpMission()
 					moveByPositionZOffset(1, 60000, 30);
 		
 				} while (distance_front < 2);
-				moveByPositionXOffset(2, 60000, 30);
+				do{
+					moveByPositionXOffset(2, 60000, 30);
+				} while (distance_down < 1);
 				moveByPositionZDesired(z, 60000, 30);
+				avoidance_flag = CalculateRadOffset(&nextPos);
 			}
-
-			
 		}
 				
         else
@@ -280,24 +282,27 @@ void PowerLinePatrol::plpMission()
             //moveByPositionBodyFrame(&nextPos);
 			moveBySpeedBodyFrame(&nextPos);
 			if (distance_front < 2){
-			    avoidance_flag = 1;
-				PositionData curPosition = api->getBroadcastData().pos;
+				avoidance_flag = 1;
+				PositionData curPosition = api->getBroadcastData().pos;//记录当前高度
 				float32_t z = curPosition.height;
 				do{
 					moveByPositionZOffset(1, 60000, 30);
-				
-				} while (distance_front < 2);
-				moveByPositionXOffset(2,60000, 30);
-				moveByPositionZDesired(z, 60000, 30);
-			   }
 
+				} while (distance_front < 2);
+				do{
+					moveByPositionXOffset(2, 60000, 30);
+				} while (distance_down < 1);
+				moveByPositionZDesired(z, 60000, 30);
+				avoidance_flag = CalculateRadOffset(&nextPos);
+			}
 			
 			}
         if(abortMission)
         {
             break;
         }
-		if (avoidance_flag == 0){
+		
+		if (avoidance_flag == 0 ){
 			nextPos = nextPosition();
 		}
     }
@@ -885,4 +890,39 @@ int PowerLinePatrol::obstacle(int health){
 	}
 	return t;
 
+}
+int  PowerLinePatrol::CalculateRadOffset(PositionData* targetPosition){
+	
+	
+	
+	double curYawInRad = Flight::toEulerAngle(api->getBroadcastData().q).yaw;
+	double yawRemaining = 0;
+	
+
+	PositionData curPosition = api->getBroadcastData().pos;
+	DJI::Vector3dData curLocalOffset;
+	//Convert position offset from first position to local coordinates
+	localOffsetFromGpsOffset(curLocalOffset, targetPosition, &curPosition);
+
+	//Conversions
+
+	Angle radOffset = 0;
+	radOffset = RAD2DEG*atan2(fabs(curLocalOffset.y), fabs(curLocalOffset.x));
+	if (curLocalOffset.x<0 && curLocalOffset.y<0)
+		radOffset = -180.0 + radOffset;
+	else if (curLocalOffset.x>0 && curLocalOffset.y<0)
+		radOffset = -radOffset;
+	else if (curLocalOffset.x<0 && curLocalOffset.y>0)
+		radOffset = 180 - radOffset;
+	double yawDesiredRad = radOffset*DEG2RAD;
+	if (yawDesiredRad>0 && curYawInRad<0 && (fabs(yawDesiredRad) + fabs(curYawInRad))>(180 * DEG2RAD)){
+		yawRemaining = curYawInRad - yawDesiredRad;
+	}
+	else
+		yawRemaining = yawDesiredRad - curYawInRad;
+	if (fabs(yawRemaining) > (90 * DEG2RAD)){
+		return 0;
+	}
+	else 
+		return 1;
 }

@@ -23,7 +23,9 @@ int my_callback(int data_type, int data_len, char *content)
     if ( e_obstacle_distance == data_type && NULL != content )
     {
         obstacle_distance *oa = (obstacle_distance*)content;
+		distance_down = oa->distance[0];
 		distance_front = oa->distance[1];
+
      /*  printf( "obstacle distance:" );
 
         for ( int i = 0; i < CAMERA_PAIR_NUM; ++i )
@@ -65,26 +67,19 @@ std::ostream& operator<<(std::ostream& out, const e_sdk_err_code value){
 
 
 void DJIonboardSDK::guidanceTest(){
-    reset_config();  // clear all data subscription
-        int err_code = init_transfer(); //wait for board ready and init transfer thread
-		qDebug() << err_code;
-
+	
       //  RETURN_IF_ERR( err_code );
         select_obstacle_distance();
         user_call_back ucb=my_callback;
-        err_code = set_sdk_event_handler( ucb );
+       int  err_code = set_sdk_event_handler( ucb );
 		qDebug() << err_code;
        // RETURN_IF_ERR( err_code );
         err_code = start_transfer();
      //   RETURN_IF_ERR( err_code );
 
 		qDebug() << err_code;
-
-     
-        p.wait_event();
-     
-
-        err_code = stop_transfer();
+       p.wait_event();
+       err_code = stop_transfer();
 		qDebug() << err_code;
         //RETURN_IF_ERR( err_code );
         //make sure the ack packet from GUIDANCE is received
@@ -97,8 +92,12 @@ void DJIonboardSDK::guidanceTest(){
 
 void DJIonboardSDK::guidance(){
 	guidance_obstacle = new QTimer();
-	guidance_obstacle->setInterval(100); // 10Hz
+	guidance_obstacle->setInterval(500); // 10Hz
 	connect(guidance_obstacle, SIGNAL(timeout()), this, SLOT(guidanceTest()));
+	reset_config();  // clear all data subscription
+	int err_code = init_transfer(); //wait for board ready and init transfer thread
+	qDebug() << err_code;
+	guidance_obstacle->start();
 
 }
 

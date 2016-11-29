@@ -69,7 +69,8 @@ public:
 	int moveByPositionXOffset(float32_t xOffsetDesired, int timeoutInMs = 60000, float posThresholdInCm = 30);
 	int moveByPositionZOffset(float32_t zOffsetDesired, int timeoutInMs, float posThresholdInCm);
 //	int guidanceTest();
-	int PowerLinePatrol::obstacle(int health);
+	int obstacle(int health);
+	int CalculateRadOffset(PositionData* targetPosition);
 private:
     WayPointInitData info;
     WayPointData *index;
