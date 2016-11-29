@@ -186,7 +186,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     GPRSCommand[2]=QString("AT+CGATT=1");
     GPRSCommand[3]=QString("AT+CIPCSGP=1,\"CMNET\"");
     GPRSCommand[4]=QString("AT+CLPORT=\"TCP\",\"2000\"");
-    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.110.202\",\"9876\"");//IP
+    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.102.147\",\"9876\"");//IP
     GPRSCommand[6]=QString("AT+CIPSHUT");
     GPRSConnectflag=0;
     setspeed=2.0;
@@ -266,7 +266,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     activateGPRSTimer->start();
     plpTimer->start();
     autoSendStatus = new QTimer();
-    autoSendStatus->setInterval(10000);
+    autoSendStatus->setInterval(8000);
     connect(autoSendStatus,SIGNAL(timeout()),this,SLOT(on_tmr_autoSendStatus()));
     autoSendStatus->start();
     ui->btn_GPRSportSend->setText(QString("started"));
@@ -326,9 +326,9 @@ void DJIonboardSDK::on_tmr_autoSendStatus()
     /*if(flight->getStatus()==1)
         plp->plpstatus=1;*/
     int plpstatus;
-    plp->statusMutex->lock();
+    //plp->statusMutex->lock();
     plpstatus=plp->plpstatus;
-    plp->statusMutex->unlock();
+    //plp->statusMutex->unlock();
     if(GPRSConnectflag)
     {
         GPRSProtocolSend_5(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG,api->getBroadcastData().pos.height,api->getBroadcastData().v.x,plpstatus);
@@ -363,8 +363,6 @@ void DJIonboardSDK::plpMissionCheck()
                     {
                         ui->radioButton_4->setChecked(true);//Take off
                         //mouseClicked(ui->btn_flight_runTask);
-                        plp->goHome.latitude=api->getBroadcastData().pos.latitude;
-                        plp->goHome.longitude=api->getBroadcastData().pos.longitude;
                         on_btn_flight_runTask_clicked();
                         sleepmSec(1000);
                         if(flight->getStatus()==3)
@@ -403,12 +401,12 @@ void DJIonboardSDK::plpMissionCheck()
             case 4: if(flight->getStatus()==3&&!plp->isRunning)
                     {
                         ui->radioButton_7->setChecked(true);//Landing
-                        plp->plpstatus=6;
                         //mouseClicked(ui->btn_flight_runTask);
                         on_btn_flight_runTask_clicked();
                         sleepmSec(1000);
                         if(flight->getStatus()==4||flight->getStatus()==5)
                         {
+                            plp->plpstatus=6;
                             GPRSProtocolSend_3(CommandData,'Y');
                             GPRSProtocolSend_6(QString("2003"));
                         }
@@ -443,6 +441,8 @@ void DJIonboardSDK::plpMissionCheck()
         plp->isUsingGPRSData=true;
         //mouseClicked(ui->btn_plp_loadAll);
         on_btn_plp_loadAll_clicked();
+        plp->goHome.latitude=api->getBroadcastData().pos.latitude;
+        plp->goHome.longitude=api->getBroadcastData().pos.longitude;
         ProtocolFlag[2]=false;
     }
     if(ProtocolFlag[1])
@@ -463,7 +463,7 @@ void DJIonboardSDK::plpMissionCheck()
         //mouseClicked(ui->btn_plp_start_stop);
         on_btn_plp_start_stop_clicked();
     }
-    if(plp->plpstatus==8&&flight->getStatus()==1)//go home finnished and landing
+    if(plp->plpstatus==6&&flight->getStatus()==1)//go home finnished and landing
     {
         plp->plpstatus=1;
     }
@@ -1084,12 +1084,16 @@ void DJIonboardSDK::GPRSPortCtl()
                 emit GPRSDataSend(GPRSCommand[GPRSflag]);
             }
             cnt++;
-            if(GPRSBUF.contains("SHUT OK",Qt::CaseSensitive)||cnt>5)
+            if(GPRSBUF.contains("SHUT OK",Qt::CaseSensitive))
             {
                 GPRSst=0;
                 cnt=0;
                 GPRSflag=0;
                 emit GPRSDataSend("ATE1");
+            }
+            else if(cnt>5)
+            {
+                emit GPRSDataSend(GPRSCommand[6]);
             }
         }
         else //if(!GPRSBUF.isEmpty())
