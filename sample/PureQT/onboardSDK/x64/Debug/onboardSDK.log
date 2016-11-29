@@ -1,45 +1,22 @@
-﻿生成启动时间为 2016/11/28 10:17:08。
-     1>项目“G:\Onboard-SDK-3.1_20161122\sample\PureQT\onboardSDK\onboardSDK.vcxproj”在节点 2 上(Rebuild 个目标)。
+﻿生成启动时间为 2016/11/29 15:43:50。
+     1>项目“G:\Onboard-SDK-3.1_20161122\sample\PureQT\onboardSDK\onboardSDK.vcxproj”在节点 2 上(Build 个目标)。
      1>CustomBuild:
-         Moc'ing QonboardSDK.h...
          Moc'ing djionboardsdk.h...
-         Uic'ing djionboardsdk.ui...
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(935,5): warning MSB8027: Two or more files with the name of moc_djionboardsdk.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are Debug\moc_djionboardsdk.cpp, Release\moc_djionboardsdk.cpp.
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(935,5): warning MSB8027: Two or more files with the name of moc_QonboardSDK.cpp will produce outputs to the same location. This can lead to an incorrect build result.  The files involved are Debug\moc_QonboardSDK.cpp, Release\moc_QonboardSDK.cpp.
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I. /I..\..\..\lib /I..\..\..\lib\inc /I../../../lib/onboardSDK/inc /ID:\Qt\5.7\msvc2013_64\include /ID:\Qt\5.7\msvc2013_64\include\QtWidgets /ID:\Qt\5.7\msvc2013_64\include\QtGui /ID:\Qt\5.7\msvc2013_64\include\QtANGLE /ID:\Qt\5.7\msvc2013_64\include\QtSerialPort /ID:\Qt\5.7\msvc2013_64\include\QtCore /Idebug /I. /I"D:\Qt\5.7\msvc2013_64\mkspecs\win32-msvc2013" /I.\GeneratedFiles /I"G:\Onboard-SDK-3.1_20161122\sample\PureQT\onboardSDK\..\..\include" /Zi /nologo /W3 /WX- /Od /D _WINDOWS /D UNICODE /D WIN32 /D WIN64 /D QT /D DJILIB /D DEPENDENCE /D QT_WIDGETS_LIB /D QT_GUI_LIB /D QT_SERIALPORT_LIB /D QT_CORE_LIB /Gm- /EHsc /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /GR /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt -w34100 -w34189 -w44996 /DWIN32 ..\..\..\lib\src\DJI_API.cpp ..\..\..\lib\src\DJI_App.cpp ..\..\..\lib\src\DJI_Camera.cpp ..\..\..\lib\src\DJI_Codec.cpp ..\..\..\lib\src\DJI_Flight.cpp ..\..\..\lib\src\DJI_Follow.cpp ..\..\..\lib\src\DJI_HardDriver.cpp ..\..\..\lib\src\DJI_HotPoint.cpp ..\..\..\lib\src\DJI_Link.cpp ..\..\..\lib\src\DJI_Memory.cpp ..\..\..\lib\src\DJI_Mission.cpp ..\..\..\lib\src\DJI_VirtualRC.cpp ..\..\..\lib\src\DJI_WayPoint.cpp Debug\moc_djionboardsdk.cpp Debug\moc_QonboardSDK.cpp QonboardSDK.cpp djionboardsdk.cpp main.cpp powerlinepatrol.cpp
-         DJI_API.cpp
-         DJI_App.cpp
-         DJI_Camera.cpp
-         DJI_Codec.cpp
-         DJI_Flight.cpp
-         DJI_Follow.cpp
-         DJI_HardDriver.cpp
-         DJI_HotPoint.cpp
-         DJI_Link.cpp
-         DJI_Memory.cpp
-         DJI_Mission.cpp
-         DJI_VirtualRC.cpp
-         DJI_WayPoint.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I. /I..\..\..\lib /I..\..\..\lib\inc /I../../../lib/onboardSDK/inc /ID:\Qt\5.7\msvc2013_64\include /ID:\Qt\5.7\msvc2013_64\include\QtWidgets /ID:\Qt\5.7\msvc2013_64\include\QtGui /ID:\Qt\5.7\msvc2013_64\include\QtANGLE /ID:\Qt\5.7\msvc2013_64\include\QtSerialPort /ID:\Qt\5.7\msvc2013_64\include\QtCore /Idebug /I. /I"D:\Qt\5.7\msvc2013_64\mkspecs\win32-msvc2013" /I.\GeneratedFiles /I"G:\Onboard-SDK-3.1_20161122\sample\PureQT\onboardSDK\..\..\include" /Zi /nologo /W3 /WX- /Od /D _WINDOWS /D UNICODE /D WIN32 /D WIN64 /D QT /D DJILIB /D DEPENDENCE /D QT_WIDGETS_LIB /D QT_GUI_LIB /D QT_SERIALPORT_LIB /D QT_CORE_LIB /Gm- /EHsc /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /GR /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt -w34100 -w34189 -w44996 /DWIN32 Debug\moc_djionboardsdk.cpp djionboardsdk.cpp main.cpp
          moc_djionboardsdk.cpp
      1>g:\onboard-sdk-3.1_20161122\sample\pureqt\onboardsdk\debug\../djionboardsdk.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-         moc_QonboardSDK.cpp
-         QonboardSDK.cpp
          djionboardsdk.cpp
      1>djionboardsdk.cpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
      1>g:\onboard-sdk-3.1_20161122\sample\pureqt\onboardsdk\djionboardsdk.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-     1>g:\onboard-sdk-3.1_20161122\sample\pureqt\onboardsdk\DJI_guidance.h(185): warning C4305: “=”: 从“double”到“float”截断
-     1>djionboardsdk.cpp(656): warning C4305: “初始化”: 从“double”到“float”截断
-     1>djionboardsdk.cpp(741): warning C4305: “初始化”: 从“double”到“float”截断
-     1>djionboardsdk.cpp(805): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+     1>g:\onboard-sdk-3.1_20161122\sample\pureqt\onboardsdk\DJI_guidance.h(186): warning C4305: “=”: 从“double”到“float”截断
+     1>djionboardsdk.cpp(662): warning C4305: “初始化”: 从“double”到“float”截断
+     1>djionboardsdk.cpp(747): warning C4305: “初始化”: 从“double”到“float”截断
+     1>djionboardsdk.cpp(810): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
          main.cpp
      1>g:\onboard-sdk-3.1_20161122\sample\pureqt\onboardsdk\djionboardsdk.h : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-         powerlinepatrol.cpp
-     1>g:\onboard-sdk-3.1_20161122\sample\pureqt\onboardsdk\DJI_guidance.h(185): warning C4305: “=”: 从“double”到“float”截断
-     1>powerlinepatrol.cpp(430): warning C4305: “初始化”: 从“double”到“float”截断
-     1>powerlinepatrol.cpp(514): warning C4305: “初始化”: 从“double”到“float”截断
-     1>powerlinepatrol.cpp(799): warning C4189: “zOffsetRemaining”: 局部变量已初始化但不引用
-     1>powerlinepatrol.cpp(875): warning C4189: “curPosition”: 局部变量已初始化但不引用
          正在生成代码...
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"debug\\onboardSDK.exe" /NOLOGO /LIBPATH:D:\Qt\5.7\msvc2013_64\lib /LIBPATH:C:\utils\postgresql\pgsql\lib /LIBPATH:C:\utils\my_sql\my_sql\lib /LIBPATH:D:\Qt\5.7\msvc2013_64\lib /LIBPATH:"G:\Onboard-SDK-3.1_20161122\sample\PureQT\onboardSDK\..\..\lib\2013\x64" D:\Qt\5.7\msvc2013_64\lib\qtmaind.lib shell32.lib D:\Qt\5.7\msvc2013_64\lib\Qt5Widgetsd.lib D:\Qt\5.7\msvc2013_64\lib\Qt5Guid.lib D:\Qt\5.7\msvc2013_64\lib\Qt5SerialPortd.lib D:\Qt\5.7\msvc2013_64\lib\Qt5Cored.lib DJI_guidance.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"debug\onboardSDK.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /MACHINE:X64 "/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'" x64\Debug\DJI_API.obj
@@ -62,8 +39,8 @@
          x64\Debug\main.obj
          x64\Debug\powerlinepatrol.obj
          onboardSDK.vcxproj -> G:\Onboard-SDK-3.1_20161122\sample\PureQT\onboardSDK\debug\onboardSDK.exe
-     1>已完成生成项目“G:\Onboard-SDK-3.1_20161122\sample\PureQT\onboardSDK\onboardSDK.vcxproj”(Rebuild 个目标)的操作。
+     1>已完成生成项目“G:\Onboard-SDK-3.1_20161122\sample\PureQT\onboardSDK\onboardSDK.vcxproj”(Build 个目标)的操作。
 
 生成成功。
 
-已用时间 00:00:17.53
+已用时间 00:00:14.77

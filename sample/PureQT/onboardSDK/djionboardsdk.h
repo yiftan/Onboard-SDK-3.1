@@ -24,7 +24,7 @@
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
-#define   SDKCOM  "COM4"
+#define   SDKCOM  "COM6"
 #define   GPRSCOM "COM8"
 #define   ACTIVEPERIOD 1000
 using namespace DJI;
@@ -188,7 +188,7 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_flight_frount_pressed();
     void on_btn_flight_back_pressed();
-   // void on_btn_flight_send_clicked();
+  // void on_btn_flight_send_clicked();
     void on_btn_flight_runTask_clicked();
     void on_btn_flight_arm_clicked(bool checked);
     void on_btn_flight_up_pressed();

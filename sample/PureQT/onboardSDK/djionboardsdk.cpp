@@ -15,7 +15,7 @@
 #include "DJI_utility.h"
 #include "DJI_guidance.h"
 using namespace std;
-PowerLinePatrol p;
+PowerLinePatrol p(new CoreAPI(),new Flight());
 //unsigned short distance_front;
 int my_callback(int data_type, int data_len, char *content)
 {
@@ -23,8 +23,10 @@ int my_callback(int data_type, int data_len, char *content)
     if ( e_obstacle_distance == data_type && NULL != content )
     {
         obstacle_distance *oa = (obstacle_distance*)content;
-		distance_down = oa->distance[0];
-		distance_front = oa->distance[1];
+		distance_down = oa->distance[0]*0.01;
+		qDebug() << distance_down;
+		distance_front = oa->distance[1]*0.01;
+		qDebug() << distance_front;
 
      /*  printf( "obstacle distance:" );
 
@@ -69,23 +71,21 @@ std::ostream& operator<<(std::ostream& out, const e_sdk_err_code value){
 void DJIonboardSDK::guidanceTest(){
 	
       //  RETURN_IF_ERR( err_code );
-        select_obstacle_distance();
-        user_call_back ucb=my_callback;
-       int  err_code = set_sdk_event_handler( ucb );
-		qDebug() << err_code;
-       // RETURN_IF_ERR( err_code );
-        err_code = start_transfer();
-     //   RETURN_IF_ERR( err_code );
-
-		qDebug() << err_code;
+	select_obstacle_distance();
+	user_call_back ucb = my_callback;
+	int err_code = set_sdk_event_handler(ucb);
+	//qDebug() << err_code;
+	// RETURN_IF_ERR( err_code );
+	err_code = start_transfer();
+	//   RETURN_IF_ERR( err_code );
        p.wait_event();
-       err_code = stop_transfer();
-		qDebug() << err_code;
+      err_code = stop_transfer();
+	//	qDebug() << err_code;
         //RETURN_IF_ERR( err_code );
         //make sure the ack packet from GUIDANCE is received
         //sleep( 1000000 );
-        err_code = release_transfer();
-		qDebug() << err_code;
+   //     err_code = release_transfer();
+	//	qDebug() << err_code;
       //  RETURN_IF_ERR( err_code );
 
 }
@@ -97,7 +97,12 @@ void DJIonboardSDK::guidance(){
 	reset_config();  // clear all data subscription
 	int err_code = init_transfer(); //wait for board ready and init transfer thread
 	qDebug() << err_code;
-	guidance_obstacle->start();
+	
+
+	qDebug() << err_code;
+	if (err_code == 0){
+		guidance_obstacle->start();
+	}
 
 }
 
@@ -111,7 +116,7 @@ void DJIonboardSDK::initFollow()
     follow->setTarget(targetBase);
     followSend = new QTimer();
     followSend->setInterval(20); // 50Hz
-    connect(followSend, SIGNAL(timeout()), this, SLOT(on_tmr_follow_send()));
+   connect(followSend, SIGNAL(timeout()), this, SLOT(on_tmr_follow_send()));
 }
 
 void DJIonboardSDK::initDisplay()
@@ -1899,6 +1904,7 @@ void DJIonboardSDK::flightSend()
     flightSend();
 	guidanceTest();
 }*/
+
 
 
 void DJIonboardSDK::filght_autosend()

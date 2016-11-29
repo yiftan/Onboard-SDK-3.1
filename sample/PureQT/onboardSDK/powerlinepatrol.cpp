@@ -1,9 +1,8 @@
 #include "powerlinepatrol.h"
 using namespace DJI::onboardSDK;
 
-
-unsigned short distance_front;
-unsigned short distance_down;
+double distance_front;
+double distance_down;
 #include "DJI_utility.h"
 #include "DJI_guidance.h"
 

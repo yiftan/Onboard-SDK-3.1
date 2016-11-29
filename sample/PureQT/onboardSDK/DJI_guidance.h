@@ -23,8 +23,8 @@
 * @enum  e_sdk_err_code
 * @brief Define error code of SDK.
 */
-extern unsigned short distance_front;
-extern unsigned short distance_down;
+extern  double distance_front;
+extern  double distance_down;
 enum e_sdk_err_code
 {
 	e_timeout = -7,			// time out
