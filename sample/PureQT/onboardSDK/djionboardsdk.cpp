@@ -2681,14 +2681,17 @@ void DJIonboardSDK::initSDK()
     wp = new WayPoint(api);
     plp = new PowerLinePatrol(api,flight);
     gprs=new GPRSSendMessage(GPRSdriver,GPRSport,ui->tb_GPRSDisplay);
+    ss = new socketServer();
     connect(this,SIGNAL(GPRSDataSend(const QString&)),gprs,SLOT(GPRSSignalRev(const QString&)));
     connect(this,SIGNAL(abortEmit(const QString&)),plp,SLOT(abortSignalSlot(const QString&)));
     connect(plp,SIGNAL(emitLog(const QString&)),this,SLOT(logSignalRecv(const QString&)));
+    connect(ss,SIGNAL(emitMalfunction(const QString&)),this,SLOT(malfunctionSlot(const QString&)));
     refreshPort();
     setPort();
     setBaudrate();
     setGPRSPort();
     setGPRSBaudrate();
+    ss->start();
 }
 
 void DJIonboardSDK::on_cb_waypoint_point_currentIndexChanged(int index)
@@ -3268,5 +3271,11 @@ void DJIonboardSDK::on_btn_Abortplp_clicked()
 void DJIonboardSDK::logSignalRecv(const QString &log)
 {
     GPRSProtocolSend_6(log);
+}
+void DJIonboardSDK::malfunctionSlot(const QString &mal)
+{
+    static int cnt=1;
+    PositionData curPos=api->getBroadcastData().pos;
+    GPRSProtocolSend_4(cnt++, mal,curPos.longitude, curPos.latitude);//发送故障检测信息E
 }
 

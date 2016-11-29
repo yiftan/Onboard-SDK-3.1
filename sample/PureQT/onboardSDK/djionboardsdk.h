@@ -21,6 +21,7 @@
 #include "QonboardSDK.h"
 #include "powerlinepatrol.h"
 #include "gprs.h"
+#include "socketserver.h"
 
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
@@ -126,6 +127,7 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_portOpen_clicked();
     void on_comboBox_portName_currentIndexChanged(int index);
     void logSignalRecv(const QString &log);
+    void malfunctionSlot(const QString &mal);
 
     void on_btn_coreSet_clicked();
     void on_btn_coreActive_clicked();
@@ -362,6 +364,7 @@ private:
                       4:降落;
                       5:返航)*/
     GPRSSendMessage *gprs;
+    socketServer *ss;
 
     Flight *flight;
     uint8_t flightFlag;
