@@ -824,19 +824,19 @@ public:
     QTextBrowser *tb_display;
     QPushButton *btn_log_clean;
     QPushButton *btn_log_save;
-    QButtonGroup *btg_cameraRoll;
-    QButtonGroup *btg_vrcMode;
-    QButtonGroup *btg_flightVL;
-    QButtonGroup *btg_flightSM;
-    QButtonGroup *btg_cameraYaw;
-    QButtonGroup *btg_flightYL;
     QButtonGroup *btg_flightHL;
+    QButtonGroup *btg_flightVL;
+    QButtonGroup *btg_flightYL;
     QButtonGroup *btg_cameraPitch;
-    QButtonGroup *btg_vrcGear;
-    QButtonGroup *btg_cameraMode;
     QButtonGroup *btg_cameraAngle;
-    QButtonGroup *btg_flightTask;
+    QButtonGroup *btg_cameraYaw;
+    QButtonGroup *btg_flightSM;
     QButtonGroup *btg_flightCL;
+    QButtonGroup *btg_vrcMode;
+    QButtonGroup *btg_cameraRoll;
+    QButtonGroup *btg_vrcGear;
+    QButtonGroup *btg_flightTask;
+    QButtonGroup *btg_cameraMode;
 
     void setupUi(QMainWindow *DJIonboardSDK)
     {

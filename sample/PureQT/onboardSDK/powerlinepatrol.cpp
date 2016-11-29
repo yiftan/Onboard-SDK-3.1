@@ -110,15 +110,20 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     isStart=false;
     setSpeed=2.0;
     setheight=2.0;
-	InitializeCriticalSection( &m_critical_section );
+    InitializeCriticalSection( &m_critical_section );
     SECURITY_ATTRIBUTES   sa;
     sa.nLength = sizeof(sa);
     sa.lpSecurityDescriptor = NULL;
     sa.bInheritHandle = TRUE;
     CreatePipe( &m_pipe_read, &m_pipe_write, &sa, 0 );
+    goHome.height=100;
+    goHomeSpeed=15;
+    goHome.latitude=30.265750643;
+    goHome.longitude=120.11965452;
+    statusMutex = new QMutex();
 }
 
-PowerLinePatrol::PowerLinePatrol()
+PowerLinePatrol::~PowerLinePatrol()
 {
     CloseHandle( m_pipe_read );
     CloseHandle( m_pipe_write );
@@ -132,7 +137,52 @@ void PowerLinePatrol::run()
 {
     while(!stopped)
     {
-        plpMission();
+        if(plpstatus==8)
+        {
+            isRunning=true;
+            goHomeMission();
+            isRunning=false;
+        }
+        else
+        {
+            //if(isRunning==false)
+            {
+                plpMission();
+                if(plpstatus==7)
+                {
+                    log="4007";
+                    emitLog(QString(log));
+                    sprintf(DJI::onboardSDK::buffer, "%s","Auto go home after 20s...");
+                    api->serialDevice->displayLog();
+                    QTime dieTime = QTime::currentTime().addSecs(20);
+                    while(QTime::currentTime() < dieTime)
+                    {
+                        if(abortMission)
+                        {
+                            break;
+                        }
+                    }
+                    if(abortMission)
+                    {
+                        statusMutex->lock();
+                        plpstatus=5;
+                        statusMutex->unlock();
+                        log="4008";
+                        emitLog(log);
+                        sprintf(DJI::onboardSDK::buffer, "%s","Auto go home aborted");
+                        api->serialDevice->displayLog();
+                    }
+                    else
+                    {
+                        isRunning=true;
+                        goHomeMission();
+                        isRunning=false;
+                    }
+                }
+            }
+        }
+        //msleep(1000);
+        stopped=true;
     }
     stopped=false;
     //qDebug()<<QString("PLP Thread stoped");
@@ -214,6 +264,14 @@ bool PowerLinePatrol::uploadIndexData(uint8_t pos)
 
     return true;
 }
+
+void PowerLinePatrol::sleepmSec(int mSec)
+{
+    QTime dieTime = QTime::currentTime().addMSecs(mSec);
+    while( QTime::currentTime() <dieTime )
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+}
+
 void PowerLinePatrol::startMission()
 {
     posindex=0;
@@ -237,9 +295,27 @@ PositionData PowerLinePatrol::nextPosition()
     return pos;
 }
 
-
-
-///
+void PowerLinePatrol::goHomeMission()
+{
+    moveBySpeedBodyFrame(&goHome,6000,0.5,15);
+    if(abortMission)
+    {
+        statusMutex->lock();
+        plpstatus=5;
+        statusMutex->unlock();
+        log="4009";
+        emitLog(log);
+        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Go home aborted");
+        api->serialDevice->displayLog();
+    }
+    else
+    {
+        flight->task(Flight::TASK_LANDING);
+        statusMutex->lock();
+        plpstatus=6;
+        statusMutex->unlock();
+    }
+}
 
 void PowerLinePatrol::plpMission()
 {
@@ -247,8 +323,10 @@ void PowerLinePatrol::plpMission()
     PositionData nextPos=nextPosition();
 	
     while(nextPos.health)
-	{
-		int avoidance_flag = 0;
+    {
+        int avoidance_flag = 0;
+        log="300"+QString(QString::number(nextPos.health));
+        emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s%d","PLPMission, Fly to point ",nextPos.health);
         api->serialDevice->displayLog();
         //GPRSProtocolSend_6(QString("300"+QString(QString::number(nextPos.health))));
@@ -265,10 +343,16 @@ void PowerLinePatrol::plpMission()
 				float32_t z = curPosition.height;
 				do{
 					moveByPositionZOffset(1, 60000, 30);
+					if (abortMission){
+						break;
+					}
 		
 				} while (distance_front < 2);
 				do{
 					moveByPositionXOffset(2, 60000, 30);
+					if (abortMission){
+						break;
+					}
 				} while (distance_down < 1);
 				moveByPositionZDesired(z, 60000, 30);
 				avoidance_flag = CalculateRadOffset(&nextPos);
@@ -286,10 +370,16 @@ void PowerLinePatrol::plpMission()
 				float32_t z = curPosition.height;
 				do{
 					moveByPositionZOffset(1, 60000, 30);
+					if (abortMission){
+						break;
+					}
 
 				} while (distance_front < 2);
 				do{
 					moveByPositionXOffset(2, 60000, 30);
+					if (abortMission){
+						break;
+					}
 				} while (distance_down < 1);
 				moveByPositionZDesired(z, 60000, 30);
 				avoidance_flag = CalculateRadOffset(&nextPos);
@@ -314,8 +404,12 @@ void PowerLinePatrol::plpMission()
     }
     else
     {
+        statusMutex->lock();
         plpstatus=7;
+        statusMutex->unlock();
         isRunning=false;
+        log="4006";
+        emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
         api->serialDevice->displayLog();
         //flight->task(Flight::TASK_GOHOME);
@@ -324,7 +418,7 @@ void PowerLinePatrol::plpMission()
     sleepmSec(1000);
     on_btn_coreSetControl_clicked();*/
     //flight->task(Flight::TASK_GOHOME);
-    stopped=true;
+   // stopped=true;
 }
 
 void PowerLinePatrol::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
@@ -371,21 +465,16 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       if(abortMission)
       {
           break;
-	  }
-	  //MovementControl API call
-
-	  //guidance abort here
-	  //if(前方有障碍）
-	  //记录当前的高度信息
-	  //break
-	/*  if (distance_front < 2){
-
-		  break;
-
-	  }
-	  */
-
-      flight->setMovementControl(flag,0, 0, zDesired, yawCmd*RAD2DEG);
+      }
+      //MovementControl API call
+      if(fabs(zRemaining) > posDesiredInm)
+      {
+          flight->setMovementControl(flag,0, 0, zDesired, 0);
+      }
+      else
+      {
+          flight->setMovementControl(flag,0, 0, zDesired, yawCmd*RAD2DEG);
+      }
       QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
@@ -432,6 +521,10 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
 
     int elapsedTime = 0;
     float speedFactor = setSpeed;
+    if(plpstatus==8)
+    {
+        speedFactor = goHomeSpeed;
+    }
     float MinSpeed = 0.1;
     Angle radOffset=0;
     double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
@@ -449,7 +542,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
         //Run multiple times to fix the influence of the inertia
         while(cnt--)
         {
-            moveByYawRate(radOffset,curPosition.height);
+            moveByYawRate(radOffset,targetPosition->height);
         }
     }
     while(std::abs(curLocalOffset.x) > posThresholdInM || std::abs(curLocalOffset.y) > posThresholdInM || \
@@ -464,6 +557,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       {
           break;
       }
+
       //MovementControl API call
 
 	  if (distance_front < 2){
@@ -474,9 +568,10 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
 
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
       QEventLoop eventloop;
-      QTimer::singleShot(20, &eventloop, SLOT(quit()));
+     /* QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
-      elapsedTime += 20;
+      elapsedTime += 20;*/
+      msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
@@ -554,12 +649,14 @@ int PowerLinePatrol::moveByPositionBodyFrame(PositionData* targetPosition,int ti
       {
           break;
       }
+
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
       QEventLoop eventloop;
-      QTimer::singleShot(20, &eventloop, SLOT(quit()));
+      /*QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
-      elapsedTime += 20;
+      elapsedTime += 20;*/
+      msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
@@ -649,14 +746,16 @@ int PowerLinePatrol::moveByPositionOffset(float32_t xOffsetDesired, float32_t yO
     {
         break;
     }
+
     //MovementControl API call
 
     flight->setMovementControl(flag,xCmd, yCmd, zCmd, yawDesired);
 
     //sleep(20)
-    QEventLoop eventloop;
+    /*QEventLoop eventloop;
     QTimer::singleShot(20, &eventloop, SLOT(quit()));
-    eventloop.exec();
+    eventloop.exec();*/
+    msleep(20);
 
     elapsedTime += 20;
 
@@ -729,7 +828,7 @@ int  PowerLinePatrol::moveByPositionXOffset(float32_t xOffsetDesired, int timeou
 		}
 		//MovementControl API call
 
-		flight->setMovementControl(flag, xCmd, 0, 0, 0);
+		flight->setMovementControl(flag, xCmd, 0,curPosition.height , 0);
 
 		//sleep(20)
 		QEventLoop eventloop;
@@ -805,7 +904,7 @@ int  PowerLinePatrol::moveByPositionZDesired(float32_t zDesired, int timeoutInMs
 		curPosition = api->getBroadcastData().pos;
 
 		//See how much farther we have to go
-		float32_t zOffsetRemaining = zDesired - curPosition.height;
+		zOffsetRemaining = zDesired - curPosition.height;
 		//See if we need to modify the setpoint
 
 	}
@@ -924,4 +1023,9 @@ int  PowerLinePatrol::CalculateRadOffset(PositionData* targetPosition){
 	}
 	else 
 		return 1;
+}
+void PowerLinePatrol::abortSignalSlot(const QString &abortMission)
+{
+    if(!abortMission.isEmpty())
+        this->abortMission=true;
 }

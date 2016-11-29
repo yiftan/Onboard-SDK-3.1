@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Form Files">
@@ -34,16 +34,6 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Generated Files\Debug">
-      <UniqueIdentifier>{075a88d9-a02e-4219-a6bb-97b068b93b1e}</UniqueIdentifier>
-      <Extensions>cpp;moc</Extensions>
-      <SourceControlFiles>False</SourceControlFiles>
-    </Filter>
-    <Filter Include="Generated Files\Release">
-      <UniqueIdentifier>{a2e12a79-e0b3-45c8-a3d7-14249ccb4f8a}</UniqueIdentifier>
-      <Extensions>cpp;moc</Extensions>
-      <SourceControlFiles>False</SourceControlFiles>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -92,23 +82,14 @@
     <ClCompile Include="djionboardsdk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="gprs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="powerlinepatrol.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Debug\moc_QonboardSDK.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Release\moc_QonboardSDK.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="Debug\moc_djionboardsdk.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Release\moc_djionboardsdk.cpp">
-      <Filter>Generated Files\Release</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -166,17 +147,40 @@
     <CustomBuild Include="djionboardsdk.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <ClInclude Include="powerlinepatrol.h">
+    <CustomBuild Include="gprs.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_djionboardsdk.h">
+    </CustomBuild>
+    <CustomBuild Include="powerlinepatrol.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="debug\moc_QonboardSDK.cpp">
       <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DJI_utility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DJI_guidance.h">
-      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="release\moc_QonboardSDK.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="debug\moc_djionboardsdk.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="release\moc_djionboardsdk.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="debug\moc_gprs.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="release\moc_gprs.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="debug\moc_powerlinepatrol.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="release\moc_powerlinepatrol.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClInclude Include="ui_djionboardsdk.h">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

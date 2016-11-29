@@ -20,13 +20,14 @@
 #endif
 #include "QonboardSDK.h"
 #include "powerlinepatrol.h"
+#include "gprs.h"
 
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM6"
 #define   GPRSCOM "COM8"
-#define   ACTIVEPERIOD 1000
+#define   ACTIVEPERIOD 1500
 using namespace DJI;
 using namespace DJI::onboardSDK;
 extern PowerLinePatrol p;
@@ -58,7 +59,7 @@ class DJIonboardSDK : public QMainWindow
     void refreshPort();
     void GPRSPortCtl();
     void GPRSDataRead();
-    void GPRSDataSend(QString GPRSDATA);
+    //void GPRSDataSend(QString GPRSDATA);
 
     //GPRS PROTOCOL COMMAND
     void GPRSProtocolRead();
@@ -130,6 +131,7 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_portRefresh_clicked();
     void on_btn_portOpen_clicked();
     void on_comboBox_portName_currentIndexChanged(int index);
+    void logSignalRecv(const QString &log);
 
     void on_btn_coreSet_clicked();
     void on_btn_coreActive_clicked();
@@ -304,9 +306,8 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_GPRSportClear_clicked();
 
     void on_btn_plp_start_stop_clicked();
-
-	void guidanceTest();
-
+    void guidanceTest();
+    void on_lineEdit_GPRSsend_textChanged(const QString &text);
 private:
 #ifdef GROUNDSTATION
   private:
@@ -327,22 +328,18 @@ private:
     CoreAPI *api;
     QtOnboardsdkPortDriver *driver;
     QSerialPort *port;
+    QByteArray *key;
 
     //GPRS
     QtOnboardsdkPortDriver *GPRSdriver;
     QSerialPort *GPRSport;
-    QByteArray *key;
     QString GPRSBUF;
-    QStringList GPRSSendBufComm;
-    QStringList GPRSSendBufData;
-    QStringList GPRSSendBufHD;
     QString GPRSCommand[7];
     QTimer *GPRSautoSend;
     QTimer *GPRSautoRead;
     int GPRSflag;
     int GPRSst;
     int GPRSConnectflag;
-    int GPRSSendflag;
     QString ProtocolHead;
     bool ProtocolFlag[5];/*协议解析结果
                           (0:飞行器参数状态查询;
@@ -369,6 +366,7 @@ private:
                       3:终止任务;
                       4:降落;
                       5:返航)*/
+    GPRSSendMessage *gprs;
 
     Flight *flight;
     uint8_t flightFlag;
@@ -416,11 +414,17 @@ private:
 
     QTimer *autoSendStatus;
 
-    int plpstatus;
+     int plpstatus;
 
-	QTimer *guidance_obstacle;
+    QTimer *guidance_obstacle;
 
+    bool abortMission;
 
+signals:
+    void GPRSDataSend(const QString &s);
+    void abortEmit(const QString &abortMission);
+
+private:
 #ifdef SDK_DEV
     UIDev *dev;
 #endif // SDK_DEV
