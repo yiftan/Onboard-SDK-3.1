@@ -16,16 +16,18 @@ PROCESS_VAL(e_timeout);
 GuidanceDriver guid;
 double distance_front;
 double distance_down;
+bool guidIsRunnig;
 
 int my_callback(int data_type, int data_len, char *content)
 {
     guid.enter();
+    guidIsRunnig=true;
     if (e_obstacle_distance == data_type && NULL != content)
     {
         obstacle_distance *oa = (obstacle_distance*)content;
         distance_down = oa->distance[0] * 0.01;
         distance_front = oa->distance[1] * 0.01;
-        qDebug() << distance_front;
+        //qDebug() << distance_front;
     }
     guid.set_event();
     guid.leave();
@@ -86,15 +88,24 @@ void GuidanceDriver::run()
     int err_code;
     while(!stopped)
     {
-        reset_config();  // clear all data subscription
-        err_code = init_transfer(); //wait for board ready and init transfer thread
-        select_obstacle_distance();
-        err_code = set_sdk_event_handler(my_callback);
-        err_code = start_transfer();
-        guid.wait_event();
-        stop_transfer();
-        release_transfer();
+        if(!initGuiFlag)
+        {
+            reset_config();  // clear all data subscription
+            err_code = init_transfer(); //wait for board ready and init transfer thread
+            select_obstacle_distance();
+            err_code = set_sdk_event_handler(my_callback);
+            err_code = start_transfer();
+            initGuiFlag=true;
+        }
+        else
+        {
+            guid.wait_event();
+        }
         msleep(200);
     }
+    stop_transfer();
+    release_transfer();
     stopped=false;
+    guidIsRunnig=false;
+    initGuiFlag=false;
 }

@@ -190,7 +190,10 @@ void PowerLinePatrol::goHomeMission()
     statusMutex->lock();
     plpstatus=8;
     statusMutex->unlock();
+    bool disableGuid=isUsingGUID;
+    isUsingGUID=false;
     moveBySpeedBodyFrame(&goHome,60000,0.5,15);
+    isUsingGUID=disableGuid;
     if(abortMission)
     {
         statusMutex->lock();

@@ -175,7 +175,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     CommandData=0;
     GPRSflag=0;
     GPRSst=0;
-
+    guidIsRunnig=false;
     for(int i=0;i<6;i++){
         ProtocolFlag[i]=false;
     }
@@ -1953,6 +1953,18 @@ void DJIonboardSDK::on_tmr_Broadcast()
         ui->tb_display->verticalScrollBar()->maximum());
     ui->tb_display->repaint();
 
+    ui->lineEdit_Gui_Front->setText(QString(QString::number(distance_front)));
+    ui->lineEdit_Gui_Bottom->setText(QString(QString::number(distance_down)));
+    if(guidIsRunnig)
+    {
+        ui->lineEdit_Gui_Status->setText("Working");
+    }
+    else
+    {
+        ui->lineEdit_Gui_Status->setText("Not working");
+    }
+
+
     // qDebug()<<api->getFilter().recvIndex;
 }
 
@@ -2989,3 +3001,17 @@ void DJIonboardSDK::malfunctionSlot(const QString &mal)
     GPRSProtocolSend_4(cnt++, mal,curPos.longitude, curPos.latitude);//发送故障检测信息E
 }
 
+
+void DJIonboardSDK::on_btn_Gui_start_stop_clicked()
+{
+    if(ui->btn_Gui_start_stop->text()=="stopped")
+    {
+        DJIguid->start();
+        ui->btn_Gui_start_stop->setText("started");
+    }
+    else
+    {
+        DJIguid->stop();
+        ui->btn_Gui_start_stop->setText("stopped");
+    }
+}

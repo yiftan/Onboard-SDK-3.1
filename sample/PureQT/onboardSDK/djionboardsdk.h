@@ -301,6 +301,8 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_plp_start_stop_clicked();
 
     void on_lineEdit_GPRSsend_textChanged(const QString &text);
+    void on_btn_Gui_start_stop_clicked();
+
 private:
 #ifdef GROUNDSTATION
   private:
