@@ -22,6 +22,7 @@
 #include "powerlinepatrol.h"
 #include "gprs.h"
 #include "socketserver.h"
+#include "guidancedriver.h"
 
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
@@ -31,7 +32,7 @@
 #define   ACTIVEPERIOD 1000
 using namespace DJI;
 using namespace DJI::onboardSDK;
-extern PowerLinePatrol p;
+
 namespace Ui
 {
 class DJIonboardSDK;
@@ -48,7 +49,6 @@ class DJIonboardSDK : public QMainWindow
 
   private:
 //	int guidanceTest();
-    void guidance();
     void setBaudrate();
     void setGPRSBaudrate();
     void setPort();
@@ -112,13 +112,6 @@ class DJIonboardSDK : public QMainWindow
     void initWayPoint();
     void initVirtualRC();
     void initGPRS();
-    void plpMission();
-    void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
-    int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
-                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
-    int moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
-    int moveByYawRate(float32_t yawDesired, float32_t zDesired, int timeoutInMs=60000, float yawThresholdIndeg=0.5, float posDesiredInCm=10);
-    int moveBySpeedBodyFrame(PositionData* targetPosition, int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=35.0);
     void sleepmSec(int mSec);
     void mouseClicked(QWidget* wid);
 
@@ -306,7 +299,7 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_GPRSportClear_clicked();
 
     void on_btn_plp_start_stop_clicked();
-    void guidanceTest();
+
     void on_lineEdit_GPRSsend_textChanged(const QString &text);
 private:
 #ifdef GROUNDSTATION
@@ -411,18 +404,15 @@ private:
 
     PowerLinePatrol *plp;
 
+    GuidanceDriver *DJIguid;
+
     QStringList ports;
 
     float setspeed;
 
     QTimer *autoSendStatus;
 
-     int plpstatus;
-
-    QTimer *guidance_obstacle;
-
     bool abortMission;
-    bool initGuiFlag;
 
 signals:
     void GPRSDataSend(const QString &s);

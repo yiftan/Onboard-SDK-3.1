@@ -1,8 +1,6 @@
 #include "powerlinepatrol.h"
 using namespace DJI::onboardSDK;
 
-double distance_front;
-double distance_down;
 #include "DJI_utility.h"
 #include "DJI_guidance.h"
 
@@ -28,16 +26,11 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     isFinished=false;
     stopped=false;
     isStart=false;
+    isUsingGUID=false;
     setSpeed=2.0;
     setheight=2.0;
     avoidDistanceFront=2.0;
     avoidDistanceBottom=1.0;
-    InitializeCriticalSection( &m_critical_section );
-    SECURITY_ATTRIBUTES   sa;
-    sa.nLength = sizeof(sa);
-    sa.lpSecurityDescriptor = NULL;
-    sa.bInheritHandle = TRUE;
-    CreatePipe( &m_pipe_read, &m_pipe_write, &sa, 0 );
     goHome.height=100;
     goHomeSpeed=15;
     goHome.latitude=30.265750643*DEG2RAD;
@@ -47,8 +40,7 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
 
 PowerLinePatrol::~PowerLinePatrol()
 {
-    CloseHandle( m_pipe_read );
-    CloseHandle( m_pipe_write );
+
 }
 
 void PowerLinePatrol::stop()
@@ -111,31 +103,6 @@ void PowerLinePatrol::run()
     //qDebug()<<QString("PLP Thread stoped");
 }
 
-void PowerLinePatrol::enter()
-{
-    EnterCriticalSection( &m_critical_section );
-}
-
-void PowerLinePatrol::leave()
-{
-    LeaveCriticalSection( &m_critical_section );
-}
-
-int PowerLinePatrol::set_event()
-{
-    char buffer[1] = {0};
-    int count = 0;
-    int ret = WriteFile( m_pipe_write, (LPWORD)buffer, 1, (LPDWORD)&count, NULL );
-    return ret;
-}
-
-int PowerLinePatrol::wait_event()
-{
-    char buffer[1] = {0};
-    int count = 0;
-    int ret = ReadFile( m_pipe_read, (LPWORD)buffer, 1, (LPDWORD)&count, NULL );
-    return ret;
-}
 void PowerLinePatrol::init(WayPointInitData *Info)
 {
     if(Info)
@@ -268,7 +235,7 @@ void PowerLinePatrol::plpMission()
 			moveBySpeedBodyFrame(&nextPos, 60000, 0.5, 15);
 
 			//如果有障碍，执行避障算法；
-            if (distance_front < avoidDistanceFront){
+            if (distance_front < avoidDistanceFront&&isUsingGUID){
 				avoidance_flag = 1;  
 				PositionData curPosition = api->getBroadcastData().pos;//记录当前高度
 				float32_t z = curPosition.height;
@@ -278,13 +245,13 @@ void PowerLinePatrol::plpMission()
 						break;
 					}
 		
-                } while (distance_front < avoidDistanceFront);
+                } while (distance_front < avoidDistanceFront&&isUsingGUID);
 				do{
                     moveByPositionXOffset(2, 60000, 15);
 					if (abortMission){
 						break;
 					}
-                } while (distance_down < avoidDistanceBottom);
+                } while (distance_down < avoidDistanceBottom&&isUsingGUID);
                 moveByPositionZDesired(z, 60000, 15);
 				avoidance_flag = CalculateRadOffset(&nextPos);
 			}
@@ -295,7 +262,7 @@ void PowerLinePatrol::plpMission()
 			
             //moveByPositionBodyFrame(&nextPos);
 			moveBySpeedBodyFrame(&nextPos);
-            if (distance_front < avoidDistanceFront){
+            if (distance_front < avoidDistanceFront&&isUsingGUID){
 				avoidance_flag = 1;
 				PositionData curPosition = api->getBroadcastData().pos;//记录当前高度
 				float32_t z = curPosition.height;
@@ -305,18 +272,18 @@ void PowerLinePatrol::plpMission()
 						break;
 					}
 
-                } while (distance_front < avoidDistanceFront);
+                } while (distance_front < avoidDistanceFront&&isUsingGUID);
 				do{
 					moveByPositionXOffset(2, 60000, 30);
 					if (abortMission){
 						break;
 					}
-                } while (distance_down < avoidDistanceBottom);
+                } while (distance_down < avoidDistanceBottom&&isUsingGUID);
 				moveByPositionZDesired(z, 60000, 30);
 				avoidance_flag = CalculateRadOffset(&nextPos);
 			}
 			
-			}
+        }
         if(abortMission)
         {
             break;
@@ -338,17 +305,11 @@ void PowerLinePatrol::plpMission()
         statusMutex->lock();
         plpstatus=7;
         statusMutex->unlock();
-        //isRunning=false;
         log="4006";
         emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
         api->serialDevice->displayLog();
-        //flight->task(Flight::TASK_GOHOME);
     }
-    /*on_btn_coreSetControl_clicked();
-    sleepmSec(1000);
-    on_btn_coreSetControl_clicked();*/
-    //flight->task(Flight::TASK_GOHOME);
 }
 
 void PowerLinePatrol::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
@@ -491,7 +452,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
 
       //MovementControl API call
 
-      if (distance_front < avoidDistanceFront){
+      if (distance_front < avoidDistanceFront&&isUsingGUID){
 
 		  break;
 
@@ -518,91 +479,6 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
       zCmd=targetPosition->height;
       if(xCmd<3*speedFactor)
-      {
-          speedFactor *= 0.75;
-      }
-      if(speedFactor<MinSpeed)
-          speedFactor=MinSpeed;
-      if (xCmd > speedFactor)
-        xCmd = speedFactor;
-    }
-    return 1;
-}
-
-int PowerLinePatrol::moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs, float yawThresholdInDeg, float posThresholdInCm)
-{
-    uint8_t flag=0x93;//body frame, position control
-    // Get current poition
-    PositionData curPosition = api->getBroadcastData().pos;
-    DJI::Vector3dData curLocalOffset;
-    DJI::EulerAngle curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
-
-    //Convert position offset from first position to local coordinates
-    localOffsetFromGpsOffset(curLocalOffset, targetPosition, &curPosition);
-
-    //Conversions
-    double yawThresholdInRad = DEG2RAD*yawThresholdInDeg;
-    float32_t posThresholdInM = posThresholdInCm/100;
-
-    int elapsedTime = 0;
-    float speedFactor = setSpeed;
-    float MinSpeed = 0.1;
-    Angle radOffset=0;
-    double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
-    double zCmd=targetPosition->height;
-    radOffset=RAD2DEG*atan2(fabs(curLocalOffset.y),fabs(curLocalOffset.x));
-    if(curLocalOffset.x<0&&curLocalOffset.y<0)
-        radOffset=-180.0+radOffset;
-    else if(curLocalOffset.x>0&&curLocalOffset.y<0)
-        radOffset=-radOffset;
-    else if(curLocalOffset.x<0&&curLocalOffset.y>0)
-        radOffset=180-radOffset;
-    if(std::abs(curEuler.yaw - radOffset) > yawThresholdInRad)
-    {
-        int cnt=50;
-        //Run multiple times to fix the influence of the inertia
-        while(cnt--)
-        {
-            moveByYawRate(radOffset,curPosition.height);
-        }
-    }
-    if (xCmd > speedFactor)
-      xCmd = speedFactor;
-    while(std::abs(curLocalOffset.x) > posThresholdInM || std::abs(curLocalOffset.y) > posThresholdInM || \
-          std::abs(curLocalOffset.z) > posThresholdInM)
-    {
-      // Check timeout
-      if (elapsedTime >= timeoutInMs)
-      {
-          break;
-      }
-      if(abortMission)
-      {
-          break;
-      }
-
-      //MovementControl API call
-      flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
-      /*QEventLoop eventloop;
-      QTimer::singleShot(20, &eventloop, SLOT(quit()));
-      eventloop.exec();*/
-      elapsedTime += 20;
-      //msleep(20);
-      //Get current position in required coordinates and units
-      curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
-      curPosition = api->getBroadcastData().pos;
-      localOffsetFromGpsOffset(curLocalOffset, targetPosition, &curPosition);
-
-      radOffset=RAD2DEG*atan2(fabs(curLocalOffset.y),fabs(curLocalOffset.x));
-      if(curLocalOffset.x<0&&curLocalOffset.y<0)
-          radOffset=-180.0+radOffset;
-      else if(curLocalOffset.x>0&&curLocalOffset.y<0)
-          radOffset=-radOffset;
-      else if(curLocalOffset.x<0&&curLocalOffset.y>0)
-          radOffset=180-radOffset;
-      xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
-      zCmd=targetPosition->height;
-      if(xCmd<2*speedFactor)
       {
           speedFactor *= 0.75;
       }
