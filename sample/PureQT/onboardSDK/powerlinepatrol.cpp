@@ -30,6 +30,8 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     isStart=false;
     setSpeed=2.0;
     setheight=2.0;
+    avoidDistanceFront=2.0;
+    avoidDistanceBottom=1.0;
     InitializeCriticalSection( &m_critical_section );
     SECURITY_ATTRIBUTES   sa;
     sa.nLength = sizeof(sa);
@@ -266,7 +268,7 @@ void PowerLinePatrol::plpMission()
 			moveBySpeedBodyFrame(&nextPos, 60000, 0.5, 15);
 
 			//如果有障碍，执行避障算法；
-			if (distance_front < 2){
+            if (distance_front < avoidDistanceFront){
 				avoidance_flag = 1;  
 				PositionData curPosition = api->getBroadcastData().pos;//记录当前高度
 				float32_t z = curPosition.height;
@@ -276,13 +278,13 @@ void PowerLinePatrol::plpMission()
 						break;
 					}
 		
-				} while (distance_front < 2);
+                } while (distance_front < avoidDistanceFront);
 				do{
                     moveByPositionXOffset(2, 60000, 15);
 					if (abortMission){
 						break;
 					}
-				} while (distance_down < 1);
+                } while (distance_down < avoidDistanceBottom);
                 moveByPositionZDesired(z, 60000, 15);
 				avoidance_flag = CalculateRadOffset(&nextPos);
 			}
@@ -293,7 +295,7 @@ void PowerLinePatrol::plpMission()
 			
             //moveByPositionBodyFrame(&nextPos);
 			moveBySpeedBodyFrame(&nextPos);
-			if (distance_front < 2){
+            if (distance_front < avoidDistanceFront){
 				avoidance_flag = 1;
 				PositionData curPosition = api->getBroadcastData().pos;//记录当前高度
 				float32_t z = curPosition.height;
@@ -303,13 +305,13 @@ void PowerLinePatrol::plpMission()
 						break;
 					}
 
-				} while (distance_front < 2);
+                } while (distance_front < avoidDistanceFront);
 				do{
 					moveByPositionXOffset(2, 60000, 30);
 					if (abortMission){
 						break;
 					}
-				} while (distance_down < 1);
+                } while (distance_down < avoidDistanceBottom);
 				moveByPositionZDesired(z, 60000, 30);
 				avoidance_flag = CalculateRadOffset(&nextPos);
 			}
@@ -489,7 +491,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
 
       //MovementControl API call
 
-	  if (distance_front < 2){
+      if (distance_front < avoidDistanceFront){
 
 		  break;
 

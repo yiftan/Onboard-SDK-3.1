@@ -422,6 +422,7 @@ private:
     QTimer *guidance_obstacle;
 
     bool abortMission;
+    bool initGuiFlag;
 
 signals:
     void GPRSDataSend(const QString &s);

@@ -15,7 +15,7 @@
 #include "DJI_utility.h"
 #include "DJI_guidance.h"
 using namespace std;
-#pragma comment(lib,"F:/GIT_project/Onboard-SDK-3.1/sample/PureQT/onboardSDK/DJI_guidance.lib")
+#pragma comment(lib,"../onboardSDK/DJI_guidance.lib")
 PowerLinePatrol p(new CoreAPI(),new Flight());
 //unsigned short distance_front;
 int my_callback(int data_type, int data_len, char *content)
@@ -28,15 +28,6 @@ int my_callback(int data_type, int data_len, char *content)
         //qDebug() << distance_down;
 		distance_front = oa->distance[1]*0.01;
         //qDebug() << distance_front;
-
-     /*  printf( "obstacle distance:" );
-
-        for ( int i = 0; i < CAMERA_PAIR_NUM; ++i )
-            printf( " %f ", 0.01f * oa->distance[i] );
-
-        printf( "\n" );
-        printf( "frame index:%d,stamp:%d\n", oa->frame_index, oa->time_stamp );
-		*/
     }
     p.set_event();
     p.leave();
@@ -70,38 +61,40 @@ std::ostream& operator<<(std::ostream& out, const e_sdk_err_code value){
 
 
 void DJIonboardSDK::guidanceTest(){
-	
+    int err_code;
+    if(!initGuiFlag){
+        reset_config();  // clear all data subscription
+        err_code = init_transfer(); //wait for board ready and init transfer thread
+        qDebug() << err_code;
+        if(err_code==0){
+            initGuiFlag=true;
+        }
+
+    }
+    else{
       //  RETURN_IF_ERR( err_code );
 	select_obstacle_distance();
 	user_call_back ucb = my_callback;
-	int err_code = set_sdk_event_handler(ucb);
+    err_code = set_sdk_event_handler(ucb);
+    if(err_code!=0){
+        initGuiFlag=false;
+    }
 	//qDebug() << err_code;
-	// RETURN_IF_ERR( err_code );
 	err_code = start_transfer();
-	//   RETURN_IF_ERR( err_code );
-       p.wait_event();
-      err_code = stop_transfer();
+    p.wait_event();
+    err_code = stop_transfer();
 	//	qDebug() << err_code;
-        //RETURN_IF_ERR( err_code );
-        //make sure the ack packet from GUIDANCE is received
-        //sleep( 1000000 );
+
    //     err_code = release_transfer();
 	//	qDebug() << err_code;
-      //  RETURN_IF_ERR( err_code );
-
+    }
 }
 
 void DJIonboardSDK::guidance(){
 	guidance_obstacle = new QTimer();
 	guidance_obstacle->setInterval(500); // 10Hz
 	connect(guidance_obstacle, SIGNAL(timeout()), this, SLOT(guidanceTest()));
-	reset_config();  // clear all data subscription
-	int err_code = init_transfer(); //wait for board ready and init transfer thread
-	qDebug() << err_code;
-	if (err_code == 0){
-		guidance_obstacle->start();
-	}
-
+    guidance_obstacle->start();
 }
 
 void DJIonboardSDK::initFollow()
@@ -266,6 +259,7 @@ void DJIonboardSDK::functionAlloc()
 DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::DJIonboardSDK)
 {
     abortMission=false;
+    initGuiFlag=false;
     CommandData=0;
     GPRSflag=0;
     GPRSst=0;
@@ -277,7 +271,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     GPRSCommand[2]=QString("AT+CGATT=1");
     GPRSCommand[3]=QString("AT+CIPCSGP=1,\"CMNET\"");
     GPRSCommand[4]=QString("AT+CLPORT=\"TCP\",\"2000\"");
-    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.102.147\",\"9876\"");//IP
+    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.110.58\",\"9876\"");//IP
     GPRSCommand[6]=QString("AT+CIPSHUT");
     GPRSConnectflag=0;
     setspeed=2.0;
@@ -454,6 +448,7 @@ void DJIonboardSDK::plpMissionCheck()
         plp->goHome.latitude=api->getBroadcastData().pos.latitude;
         plp->goHome.longitude=api->getBroadcastData().pos.longitude;
         GPRSProtocolSend_7('Y',plp->goHome.longitude*RAD2DEG,plp->goHome.latitude*RAD2DEG);
+        ProtocolFlag[5]=false;
     }
     if(ProtocolFlag[3])
     {
@@ -1326,6 +1321,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                             plp->goHome.height=Protocol[5].toDouble();
                             plp->goHomeSpeed=Protocol[6].toDouble();
                             FlightStatusSet.distance=Protocol[7].toDouble();
+                            plp->avoidDistanceFront=FlightStatusSet.distance;
                             ProtocolFlag[1]=true;
                             GPRSProtocolSend_1('Y');
                         }
@@ -1653,10 +1649,7 @@ void DJIonboardSDK::GPRSProtocolSend_7(char res, double Lon, double Lat)
 
     //GPRSDataSend("AT+CIPSEND");
     //sleepmSec(1000);
-    QTime b=QTime(0,0,0,0);
-    QTime t=QTime::currentTime();
-    QString Head=QString::number(b.msecsTo(t),10);
-    QString tmp=QString("AT+CIPSEND\r|")+Head+"=U=R="+QString(res)+"="+\
+    QString tmp=QString("AT+CIPSEND\r|")+ProtocolHead+"=U=R="+QString(res)+"="+\
             QString::number(Lon,'.',11)+"="+QString::number(Lat,'.',12)+"=";
     char X=tmp[0].toLatin1();
     for(int i=1;i<tmp.length();i++)

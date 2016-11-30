@@ -63,6 +63,8 @@ public:
     float goHomeSpeed;
     PositionData goHome;
     QMutex *statusMutex;
+    float avoidDistanceFront;
+    float avoidDistanceBottom;
     void plpMission();
     void goHomeMission();
     void sleepmSec(int mSec);
