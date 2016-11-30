@@ -21,13 +21,14 @@
 #include "QonboardSDK.h"
 #include "powerlinepatrol.h"
 #include "gprs.h"
+#include "socketserver.h"
 
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM6"
 #define   GPRSCOM "COM8"
-#define   ACTIVEPERIOD 1500
+#define   ACTIVEPERIOD 1000
 using namespace DJI;
 using namespace DJI::onboardSDK;
 extern PowerLinePatrol p;
@@ -63,7 +64,7 @@ class DJIonboardSDK : public QMainWindow
 
     //GPRS PROTOCOL COMMAND
     void GPRSProtocolRead();
-    void GPRSProtocolSend_0(double Height, double v);//发送飞行器状态信息P
+    void GPRSProtocolSend_0(double Height, double v, double goHomeHeight, double goHomeSpeed, double distance);//发送飞行器状态信息P
     void GPRSProtocolSend_0(char res);//发送飞行状态查询协议解析结果P
     void GPRSProtocolSend_1(char res);//发送状态设置回复S
     void GPRSProtocolSend_2(char res);//发送路径信息设置结果D
@@ -72,6 +73,8 @@ class DJIonboardSDK : public QMainWindow
     void GPRSProtocolSend_4(int ErrorNum, QString ErrorType,double Lon, double Lat);//发送故障检测信息E
     void GPRSProtocolSend_5(double Lon,double Lat,double height,double v,int status);//发送心跳数据L
     void GPRSProtocolSend_6(QString StatusCode);//发送状态编码T
+    void GPRSProtocolSend_7(char res, double Lon, double Lat);//设置当前点为飞行器返航点R
+    void GPRSProtocolSend_7(char res);//发送返航点设置查询协议解析结果R
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -132,6 +135,7 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_portOpen_clicked();
     void on_comboBox_portName_currentIndexChanged(int index);
     void logSignalRecv(const QString &log);
+    void malfunctionSlot(const QString &mal);
 
     void on_btn_coreSet_clicked();
     void on_btn_coreActive_clicked();
@@ -341,15 +345,17 @@ private:
     int GPRSst;
     int GPRSConnectflag;
     QString ProtocolHead;
-    bool ProtocolFlag[5];/*协议解析结果
+    bool ProtocolFlag[6];/*协议解析结果
                           (0:飞行器参数状态查询;
                            1:飞行器参数设置;
                            2:导航路径设置;
                            3:飞行器控制命令设置;
-                           4:故障信息上传结果)*/
+                           4:故障信息上传结果
+                           5:设置当前飞行器坐标为返航点)*/
     struct FlightStaSet{
         double Height;
         double v;
+        double distance;
     }FlightStatusSet;//飞行高度和速度设置
     struct point{
         double Lon;
@@ -367,6 +373,7 @@ private:
                       4:降落;
                       5:返航)*/
     GPRSSendMessage *gprs;
+    socketServer *ss;
 
     Flight *flight;
     uint8_t flightFlag;

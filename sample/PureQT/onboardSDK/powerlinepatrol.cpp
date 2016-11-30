@@ -118,8 +118,8 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     CreatePipe( &m_pipe_read, &m_pipe_write, &sa, 0 );
     goHome.height=100;
     goHomeSpeed=15;
-    goHome.latitude=30.265750643;
-    goHome.longitude=120.11965452;
+    goHome.latitude=30.265750643*DEG2RAD;
+    goHome.longitude=120.11965452*DEG2RAD;
     statusMutex = new QMutex();
 }
 
@@ -167,6 +167,7 @@ void PowerLinePatrol::run()
                         statusMutex->lock();
                         plpstatus=5;
                         statusMutex->unlock();
+                        abortMission=false;
                         log="4008";
                         emitLog(log);
                         sprintf(DJI::onboardSDK::buffer, "%s","Auto go home aborted");
@@ -179,8 +180,10 @@ void PowerLinePatrol::run()
                         isRunning=false;
                     }
                 }
+                isRunning=false;
             }
         }
+        stopped=true;
         //msleep(1000);
         stopped=true;
     }
@@ -297,7 +300,10 @@ PositionData PowerLinePatrol::nextPosition()
 
 void PowerLinePatrol::goHomeMission()
 {
-    moveBySpeedBodyFrame(&goHome,6000,0.5,15);
+    statusMutex->lock();
+    plpstatus=8;
+    statusMutex->unlock();
+    moveBySpeedBodyFrame(&goHome,60000,0.5,15);
     if(abortMission)
     {
         statusMutex->lock();
@@ -307,6 +313,7 @@ void PowerLinePatrol::goHomeMission()
         emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Go home aborted");
         api->serialDevice->displayLog();
+        abortMission=false;
     }
     else
     {
@@ -314,6 +321,10 @@ void PowerLinePatrol::goHomeMission()
         statusMutex->lock();
         plpstatus=6;
         statusMutex->unlock();
+        log="2002";
+        emitLog(log);
+        sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Landing");
+        api->serialDevice->displayLog();
     }
 }
 
@@ -407,7 +418,7 @@ void PowerLinePatrol::plpMission()
         statusMutex->lock();
         plpstatus=7;
         statusMutex->unlock();
-        isRunning=false;
+        //isRunning=false;
         log="4006";
         emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
@@ -418,7 +429,6 @@ void PowerLinePatrol::plpMission()
     sleepmSec(1000);
     on_btn_coreSetControl_clicked();*/
     //flight->task(Flight::TASK_GOHOME);
-   // stopped=true;
 }
 
 void PowerLinePatrol::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
@@ -478,6 +488,7 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
+      //msleep(20);
 
       elapsedTime += 20;
 
@@ -568,10 +579,10 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
 
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
       QEventLoop eventloop;
-     /* QTimer::singleShot(20, &eventloop, SLOT(quit()));
+      QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();
-      elapsedTime += 20;*/
-      msleep(20);
+      elapsedTime += 20;
+      //msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
@@ -652,11 +663,11 @@ int PowerLinePatrol::moveByPositionBodyFrame(PositionData* targetPosition,int ti
 
       //MovementControl API call
       flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
-      QEventLoop eventloop;
-      /*QTimer::singleShot(20, &eventloop, SLOT(quit()));
-      eventloop.exec();
-      elapsedTime += 20;*/
-      msleep(20);
+      /*QEventLoop eventloop;
+      QTimer::singleShot(20, &eventloop, SLOT(quit()));
+      eventloop.exec();*/
+      elapsedTime += 20;
+      //msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
@@ -755,7 +766,7 @@ int PowerLinePatrol::moveByPositionOffset(float32_t xOffsetDesired, float32_t yO
     /*QEventLoop eventloop;
     QTimer::singleShot(20, &eventloop, SLOT(quit()));
     eventloop.exec();*/
-    msleep(20);
+    //msleep(20);
 
     elapsedTime += 20;
 

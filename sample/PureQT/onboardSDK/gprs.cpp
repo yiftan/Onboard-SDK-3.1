@@ -82,7 +82,7 @@ void GPRSSendMessage::GPRSDataSend()
                 ba=GPRSDATA[0].toLatin1();
                 tmp=ba.data();
                 GPRSDATA_len = GPRSdriver->charsend(tmp, GPRSDATA[0].length());
-                msleep(500);
+                msleep(1000);
                 ba=GPRSDATA[1].toLatin1();
                 tmp=ba.data();
                 GPRSDATA_len = GPRSdriver->charsend(tmp, GPRSDATA[1].length());
