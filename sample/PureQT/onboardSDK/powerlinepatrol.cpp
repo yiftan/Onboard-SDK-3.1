@@ -310,10 +310,10 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       {
           flight->setMovementControl(flag,0, 0, zDesired, yawCmd*RAD2DEG);
       }
-      QEventLoop eventloop;
+      /*QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
-      eventloop.exec();
-      //msleep(20);
+      eventloop.exec();*/
+      msleep(20);
 
       elapsedTime += 20;
 
