@@ -11,85 +11,7 @@ double distance_down;
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
-//PowerLinePatrol p;
-/*int my_callback(int data_type, int data_len, char *content)
-{
-	p.enter();
-	if (e_obstacle_distance == data_type && NULL != content)
-	{
-		obstacle_distance *oa = (obstacle_distance*)content;
-		distance_front = oa->distance[1];
-		printf("obstacle distance:");
 
-		for (int i = 0; i < CAMERA_PAIR_NUM; ++i)
-			printf(" %f ", 0.01f * oa->distance[i]);
-
-		printf("\n");
-		printf("frame index:%d,stamp:%d\n", oa->frame_index, oa->time_stamp);
-		printf("%f", distance_front);
-	}
-	p.set_event();
-	p.leave();
-	return 0;
-}
-
-std::ostream& operator<<(std::ostream& out, const e_sdk_err_code value){
-	const char* s = 0;
-	static char str[100] = { 0 };
-#define PROCESS_VAL(p) case(p): s = #p; break;
-	switch (value){
-		PROCESS_VAL(e_OK);
-		PROCESS_VAL(e_load_libusb_err);
-		PROCESS_VAL(e_sdk_not_inited);
-		PROCESS_VAL(e_disparity_not_allowed);
-		PROCESS_VAL(e_image_frequency_not_allowed);
-		PROCESS_VAL(e_config_not_ready);
-		PROCESS_VAL(e_online_flag_not_ready);
-		PROCESS_VAL(e_stereo_cali_not_ready);
-		PROCESS_VAL(e_libusb_io_err);
-		PROCESS_VAL(e_timeout);
-	default:
-		strcpy(str, "Unknown error");
-		s = str;
-		break;
-	}
-#undef PROCESS_VAL
-
-	return out << s;
-}
-
-
-int PowerLinePatrol::guidanceTest(){
-	reset_config();  // clear all data subscription
-	int err_code = init_transfer(); //wait for board ready and init transfer thread
-	qDebug() << err_code;
-
-	//  RETURN_IF_ERR( err_code );
-	select_obstacle_distance();
-	user_call_back ucb = my_callback;
-	err_code = set_sdk_event_handler(ucb);
-	qDebug() << err_code;
-	// RETURN_IF_ERR( err_code );
-	err_code = start_transfer();
-	//   RETURN_IF_ERR( err_code );
-
-	qDebug() << err_code;
-
-
-	p.wait_event();
-
-
-	err_code = stop_transfer();
-	qDebug() << err_code;
-	//RETURN_IF_ERR( err_code );
-	//make sure the ack packet from GUIDANCE is received
-	//sleep( 1000000 );
-	err_code = release_transfer();
-	qDebug() << err_code;
-	//  RETURN_IF_ERR( err_code );
-	return 0;
-}
-*/
 PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
 {
     this->api=api;
@@ -183,8 +105,6 @@ void PowerLinePatrol::run()
                 isRunning=false;
             }
         }
-        stopped=true;
-        //msleep(1000);
         stopped=true;
     }
     stopped=false;
@@ -359,12 +279,14 @@ void PowerLinePatrol::plpMission()
 					}
 		
 				} while (distance_front < 2);
+                                moveByPositionZOffset(0.5, 60000, 30);
 				do{
 					moveByPositionXOffset(2, 60000, 30);
 					if (abortMission){
 						break;
 					}
 				} while (distance_down < 1);
+                                moveByPositionXOffset(0.5, 60000, 30);
 				moveByPositionZDesired(z, 60000, 30);
 				avoidance_flag = CalculateRadOffset(&nextPos);
 			}
@@ -386,12 +308,14 @@ void PowerLinePatrol::plpMission()
 					}
 
 				} while (distance_front < 2);
+                                moveByPositionZOffset(0.5, 60000, 30);
 				do{
 					moveByPositionXOffset(2, 60000, 30);
 					if (abortMission){
 						break;
 					}
 				} while (distance_down < 1);
+                                moveByPositionXOffset(0.5, 60000, 30);
 				moveByPositionZDesired(z, 60000, 30);
 				avoidance_flag = CalculateRadOffset(&nextPos);
 			}
@@ -485,10 +409,10 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       {
           flight->setMovementControl(flag,0, 0, zDesired, yawCmd*RAD2DEG);
       }
-      QEventLoop eventloop;
+      /*QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
-      eventloop.exec();
-      //msleep(20);
+      eventloop.exec();*/
+      msleep(20);
 
       elapsedTime += 20;
 
@@ -578,11 +502,11 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
 	  }
 
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
-      QEventLoop eventloop;
+      /*QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
-      eventloop.exec();
+      eventloop.exec();*/
       elapsedTime += 20;
-      //msleep(20);
+      msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;

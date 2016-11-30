@@ -119,10 +119,6 @@ class DJIonboardSDK : public QMainWindow
     int moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
     int moveByYawRate(float32_t yawDesired, float32_t zDesired, int timeoutInMs=60000, float yawThresholdIndeg=0.5, float posDesiredInCm=10);
     int moveBySpeedBodyFrame(PositionData* targetPosition, int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=35.0);
-
-
-
-
     void sleepmSec(int mSec);
     void mouseClicked(QWidget* wid);
 
