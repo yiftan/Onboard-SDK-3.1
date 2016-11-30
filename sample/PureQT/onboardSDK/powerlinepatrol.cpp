@@ -6,8 +6,6 @@ double distance_down;
 #include "DJI_utility.h"
 #include "DJI_guidance.h"
 
-#include <QDebug>
-
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
@@ -273,21 +271,19 @@ void PowerLinePatrol::plpMission()
 				PositionData curPosition = api->getBroadcastData().pos;//记录当前高度
 				float32_t z = curPosition.height;
 				do{
-					moveByPositionZOffset(1, 60000, 30);
+                    moveByPositionZOffset(1, 60000, 15);
 					if (abortMission){
 						break;
 					}
 		
 				} while (distance_front < 2);
-                                moveByPositionZOffset(0.5, 60000, 30);
 				do{
-					moveByPositionXOffset(2, 60000, 30);
+                    moveByPositionXOffset(2, 60000, 15);
 					if (abortMission){
 						break;
 					}
 				} while (distance_down < 1);
-                                moveByPositionXOffset(0.5, 60000, 30);
-				moveByPositionZDesired(z, 60000, 30);
+                moveByPositionZDesired(z, 60000, 15);
 				avoidance_flag = CalculateRadOffset(&nextPos);
 			}
 		}
@@ -308,14 +304,12 @@ void PowerLinePatrol::plpMission()
 					}
 
 				} while (distance_front < 2);
-                                moveByPositionZOffset(0.5, 60000, 30);
 				do{
 					moveByPositionXOffset(2, 60000, 30);
 					if (abortMission){
 						break;
 					}
 				} while (distance_down < 1);
-                                moveByPositionXOffset(0.5, 60000, 30);
 				moveByPositionZDesired(z, 60000, 30);
 				avoidance_flag = CalculateRadOffset(&nextPos);
 			}

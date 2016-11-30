@@ -15,6 +15,7 @@
 #include "DJI_utility.h"
 #include "DJI_guidance.h"
 using namespace std;
+#pragma comment(lib,"F:/GIT_project/Onboard-SDK-3.1/sample/PureQT/onboardSDK/DJI_guidance.lib")
 PowerLinePatrol p(new CoreAPI(),new Flight());
 //unsigned short distance_front;
 int my_callback(int data_type, int data_len, char *content)
@@ -24,9 +25,9 @@ int my_callback(int data_type, int data_len, char *content)
     {
         obstacle_distance *oa = (obstacle_distance*)content;
 		distance_down = oa->distance[0]*0.01;
-		qDebug() << distance_down;
+        //qDebug() << distance_down;
 		distance_front = oa->distance[1]*0.01;
-		qDebug() << distance_front;
+        //qDebug() << distance_front;
 
      /*  printf( "obstacle distance:" );
 
@@ -447,6 +448,12 @@ void DJIonboardSDK::plpMissionCheck()
         GPRSProtocolSend_6(QString("1001"));
         GPRSProtocolSend_6(QString("2001"));
         sendActivateOk=1;
+    }
+    if(ProtocolFlag[5])
+    {
+        plp->goHome.latitude=api->getBroadcastData().pos.latitude;
+        plp->goHome.longitude=api->getBroadcastData().pos.longitude;
+        GPRSProtocolSend_7('Y',plp->goHome.longitude*RAD2DEG,plp->goHome.latitude*RAD2DEG);
     }
     if(ProtocolFlag[3])
     {

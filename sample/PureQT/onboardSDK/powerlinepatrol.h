@@ -14,10 +14,12 @@
 #include <QComboBox>
 #include <QEventLoop>
 #include <fstream>
+#include <winsock2.h>
 #include <Windows.h>
 #include <WinBase.h>
 #include "QonboardSDK.h"
 #include <QCoreApplication>
+#include <QDebug>
 
 namespace DJI
 {
