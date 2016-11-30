@@ -364,6 +364,8 @@ void DJIonboardSDK::plpMissionCheck()
                     {
                         ui->radioButton_4->setChecked(true);//Take off
                         //mouseClicked(ui->btn_flight_runTask);
+                        plp->goHome.latitude=api->getBroadcastData().pos.latitude;
+                        plp->goHome.longitude=api->getBroadcastData().pos.longitude;
                         on_btn_flight_runTask_clicked();
                         sleepmSec(1000);
                         if(flight->getStatus()==3)
@@ -442,8 +444,6 @@ void DJIonboardSDK::plpMissionCheck()
         plp->isUsingGPRSData=true;
         //mouseClicked(ui->btn_plp_loadAll);
         on_btn_plp_loadAll_clicked();
-        plp->goHome.latitude=api->getBroadcastData().pos.latitude;
-        plp->goHome.longitude=api->getBroadcastData().pos.longitude;
         ProtocolFlag[2]=false;
     }
     if(ProtocolFlag[1])

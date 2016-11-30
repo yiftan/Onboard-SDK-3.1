@@ -26,8 +26,8 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     setheight=2.0;
     goHome.height=100;
     goHomeSpeed=15;
-    goHome.latitude=30.265750643;
-    goHome.longitude=120.11965452;
+    goHome.latitude=30.265750643*DEG2RAD;
+    goHome.longitude=120.11965452*DEG2RAD;
     statusMutex = new QMutex();
 }
 void PowerLinePatrol::stop()
@@ -68,6 +68,7 @@ void PowerLinePatrol::run()
                         statusMutex->lock();
                         plpstatus=5;
                         statusMutex->unlock();
+                        abortMission=false;
                         log="4008";
                         emitLog(log);
                         sprintf(DJI::onboardSDK::buffer, "%s","Auto go home aborted");
@@ -176,7 +177,7 @@ void PowerLinePatrol::goHomeMission()
     statusMutex->lock();
     plpstatus=8;
     statusMutex->unlock();
-    moveBySpeedBodyFrame(&goHome,6000,0.5,15);
+    moveBySpeedBodyFrame(&goHome,60000,0.5,15);
     if(abortMission)
     {
         statusMutex->lock();
