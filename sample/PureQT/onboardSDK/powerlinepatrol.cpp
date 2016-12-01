@@ -29,7 +29,7 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     isUsingGUID=false;
     setSpeed=2.0;
     setheight=2.0;
-    avoidDistanceFront=2.0;
+    avoidDistanceFront=1.0;
     avoidDistanceBottom=1.0;
     goHome.height=100;
     goHomeSpeed=15;
@@ -258,7 +258,7 @@ void PowerLinePatrol::plpMission()
                 moveByPositionXOffset(avoidDistanceFront);
                 do
                 {
-                    moveByPositionXOffset(1.0);
+                    moveByPositionXOffset(0.8);
                     if (abortMission)
                     {
 						break;
@@ -276,26 +276,33 @@ void PowerLinePatrol::plpMission()
             //moveByPositionBodyFrame(&nextPos);
 			moveBySpeedBodyFrame(&nextPos);
             if (distance_front < avoidDistanceFront&&isUsingGUID){
-				avoidance_flag = 1;
-				PositionData curPosition = api->getBroadcastData().pos;//记录当前高度
-				float32_t z = curPosition.height;
-				do{
-					moveByPositionZOffset(1, 60000, 30);
-					if (abortMission){
-						break;
-					}
-
-                } while (distance_front < avoidDistanceFront&&isUsingGUID);
-				do{
-					moveByPositionXOffset(2, 60000, 30);
-					if (abortMission){
-						break;
-					}
-                } while (distance_down < avoidDistanceBottom&&isUsingGUID);
-				moveByPositionZDesired(z, 60000, 30);
-				avoidance_flag = CalculateRadOffset(&nextPos);
+                avoidance_flag = 1;
+                PositionData recordPosition = api->getBroadcastData().pos;//记录当前高度
+                do
+                {
+                    tmpPos=api->getBroadcastData().pos;
+                    moveByPositionZDesired(tmpPos.height+1);
+                    if (abortMission)
+                    {
+                        break;
+                    }
+                } while(distance_front < avoidDistanceFront&&isUsingGUID);
+                tmpPos=api->getBroadcastData().pos;
+                moveByPositionZDesired(tmpPos.height+0.5);
+                moveByPositionXOffset(avoidDistanceFront);
+                do
+                {
+                    moveByPositionXOffset(1);
+                    if (abortMission)
+                    {
+                        break;
+                    }
+                    downOffset=api->getBroadcastData().pos.height-recordPosition.height;
+                } while(distance_down < downOffset&&isUsingGUID);
+                moveByPositionXOffset(0.5);
+                moveByPositionZDesired(recordPosition.height);
+                avoidance_flag = CalculateRadOffset(&nextPos);
 			}
-			
         }
         if(abortMission)
         {
@@ -406,6 +413,11 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       else if(yawRemaining<0)
           yawCmd = yawRemaining > -1*yawRateRad ? yawRemaining : -1*yawRateRad;
     }
+    VelocityData curSpeed=api->getBroadcastData().v;
+    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
+    {
+        curSpeed=api->getBroadcastData().v;
+    }
     return 1;
 }
 
@@ -502,6 +514,11 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
           speedFactor=MinSpeed;
       if (xCmd > speedFactor)
           xCmd = speedFactor;
+    }
+    VelocityData curSpeed=api->getBroadcastData().v;
+    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
+    {
+        curSpeed=api->getBroadcastData().v;
     }
     return 1;
 }
@@ -673,6 +690,11 @@ int  PowerLinePatrol::moveByPositionXOffset(float32_t xOffsetDesired, int timeou
         else
             xCmd = 0;
 	}
+    VelocityData curSpeed=api->getBroadcastData().v;
+    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
+    {
+        curSpeed=api->getBroadcastData().v;
+    }
 	return 1;
 }
 
@@ -740,6 +762,11 @@ int  PowerLinePatrol::moveByPositionZDesired(float32_t zDesired, int timeoutInMs
         else
             zCmd = 0;
 	}
+    VelocityData curSpeed=api->getBroadcastData().v;
+    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
+    {
+        curSpeed=api->getBroadcastData().v;
+    }
 	return 1;
 }
 int  PowerLinePatrol::moveByPositionZOffset(float32_t zOffsetDesired, int timeoutInMs, float posThresholdInCm)

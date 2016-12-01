@@ -1532,7 +1532,11 @@ void DJIonboardSDK::on_btn_flight_runTask_clicked()
     QString name = ui->btg_flightTask->checkedButton()->text();
     Flight::TASK type = Flight::TASK_GOHOME;
     if (name == "Take off")
+    {
         type = Flight::TASK_TAKEOFF;
+        plp->goHome.latitude=api->getBroadcastData().pos.latitude;
+        plp->goHome.longitude=api->getBroadcastData().pos.longitude;
+    }
     else if (name == "Landing")
         type = Flight::TASK_LANDING;
 
