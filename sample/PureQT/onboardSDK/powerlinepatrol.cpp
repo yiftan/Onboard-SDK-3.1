@@ -27,9 +27,10 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     stopped=false;
     isStart=false;
     isUsingGUID=false;
+    haveObstacle=false;
     setSpeed=2.0;
     setheight=2.0;
-    avoidDistanceFront=1.0;
+    avoidDistanceFront=2.0;
     avoidDistanceBottom=1.0;
     goHome.height=100;
     goHomeSpeed=15;
@@ -89,6 +90,8 @@ void PowerLinePatrol::run()
                     }
                     else
                     {
+                        log="2004";
+                        emitLog(QString(log));
                         isRunning=true;
                         goHomeMission();
                         isRunning=false;
@@ -240,8 +243,10 @@ void PowerLinePatrol::plpMission()
 			moveBySpeedBodyFrame(&nextPos, 60000, 0.5, 15);
 
 			//如果有障碍，执行避障算法；
-            if (distance_front < avoidDistanceFront&&isUsingGUID)
+            if (haveObstacle)
             {
+                sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, avoid obstacle ");
+                api->serialDevice->displayLog();
 				avoidance_flag = 1;  
                 PositionData recordPosition = api->getBroadcastData().pos;//记录当前高度
                 do
@@ -258,7 +263,7 @@ void PowerLinePatrol::plpMission()
                 moveByPositionXOffset(avoidDistanceFront);
                 do
                 {
-                    moveByPositionXOffset(0.8);
+                    moveByPositionXOffset(1);
                     if (abortMission)
                     {
 						break;
@@ -268,14 +273,17 @@ void PowerLinePatrol::plpMission()
                 moveByPositionXOffset(0.5);
                 moveByPositionZDesired(recordPosition.height);
 				avoidance_flag = CalculateRadOffset(&nextPos);
+                haveObstacle=false;
 			}
-		}
-				
+		}		
         else
         {
             //moveByPositionBodyFrame(&nextPos);
 			moveBySpeedBodyFrame(&nextPos);
-            if (distance_front < avoidDistanceFront&&isUsingGUID){
+            if (haveObstacle)
+            {
+                sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, avoid obstacle ");
+                api->serialDevice->displayLog();
                 avoidance_flag = 1;
                 PositionData recordPosition = api->getBroadcastData().pos;//记录当前高度
                 do
@@ -302,13 +310,13 @@ void PowerLinePatrol::plpMission()
                 moveByPositionXOffset(0.5);
                 moveByPositionZDesired(recordPosition.height);
                 avoidance_flag = CalculateRadOffset(&nextPos);
+                haveObstacle=false;
 			}
         }
         if(abortMission)
         {
             break;
         }
-		
 		if (avoidance_flag == 0 ){
 			nextPos = nextPosition();
 		}
@@ -464,8 +472,8 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
     }
     if (xCmd > speedFactor)
         xCmd = speedFactor;
-    while(std::abs(curLocalOffset.x) > posThresholdInM || std::abs(curLocalOffset.y) > posThresholdInM || \
-          std::abs(curLocalOffset.z) > posThresholdInM)
+    while(fabs(curLocalOffset.x) > posThresholdInM || fabs(curLocalOffset.y) > posThresholdInM || \
+          fabs(curLocalOffset.z) > posThresholdInM)
     {
       // Check timeout
       if (elapsedTime >= timeoutInMs)
@@ -481,6 +489,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
 
       if (distance_front < avoidDistanceFront&&isUsingGUID)
       {
+          haveObstacle=true;
           log=QString("5004");
           emitLog(log);
 		  break;
@@ -518,6 +527,10 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
     VelocityData curSpeed=api->getBroadcastData().v;
     while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
     {
+        if(abortMission)
+        {
+            break;
+        }
         curSpeed=api->getBroadcastData().v;
     }
     return 1;
@@ -693,6 +706,10 @@ int  PowerLinePatrol::moveByPositionXOffset(float32_t xOffsetDesired, int timeou
     VelocityData curSpeed=api->getBroadcastData().v;
     while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
     {
+        if(abortMission)
+        {
+            break;
+        }
         curSpeed=api->getBroadcastData().v;
     }
 	return 1;
@@ -765,6 +782,10 @@ int  PowerLinePatrol::moveByPositionZDesired(float32_t zDesired, int timeoutInMs
     VelocityData curSpeed=api->getBroadcastData().v;
     while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
     {
+        if(abortMission)
+        {
+            break;
+        }
         curSpeed=api->getBroadcastData().v;
     }
 	return 1;

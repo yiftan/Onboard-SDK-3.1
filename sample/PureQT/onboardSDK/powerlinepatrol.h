@@ -54,6 +54,7 @@ public:
     bool isFinished;
     bool stopped;
     bool isUsingGUID;
+    bool haveObstacle;
     volatile int plpstatus;
     float setSpeed;
     float setheight;
@@ -67,7 +68,7 @@ public:
     void sleepmSec(int mSec);
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
     int moveByYawRate(float32_t yawDesired, float32_t zDesired,
-                      int timeoutInMs=6000, float yawThresholdIndeg=0.5, float posDesiredInCm=30);
+                      int timeoutInMs=60000, float yawThresholdIndeg=0.5, float posDesiredInCm=10);
     int moveBySpeedBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
                              int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
