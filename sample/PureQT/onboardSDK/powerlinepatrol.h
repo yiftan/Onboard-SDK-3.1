@@ -71,9 +71,9 @@ public:
     int moveBySpeedBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
                              int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
-	int moveByPositionZDesired(float32_t zDesired, int timeoutInMs = 60000, float posThresholdInCm = 30);
-	int moveByPositionXOffset(float32_t xOffsetDesired, int timeoutInMs = 60000, float posThresholdInCm = 30);
-	int moveByPositionZOffset(float32_t zOffsetDesired, int timeoutInMs, float posThresholdInCm);
+    int moveByPositionZDesired(float32_t zDesired, int timeoutInMs = 60000, float posThresholdInCm = 10);
+    int moveByPositionXOffset(float32_t xOffsetDesired, int timeoutInMs = 60000, float posThresholdInCm = 30);
+    int moveByPositionZOffset(float32_t zOffsetDesired, int timeoutInMs=60000, float posThresholdInCm=10);
 	int obstacle(int health);
 	int CalculateRadOffset(PositionData* targetPosition);
 public slots:

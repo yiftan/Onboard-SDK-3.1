@@ -846,7 +846,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                             plp->goHomeSpeed=Protocol[6].toDouble();
                             FlightStatusSet.distance=Protocol[7].toDouble();
                             plp->avoidDistanceFront=FlightStatusSet.distance;
-                            if(plp->avoidDistanceFront<=0)
+                            if(fabs(plp->avoidDistanceFront)<0.005)
                             {
                                 plp->isUsingGUID=false;
                             }
@@ -2796,7 +2796,8 @@ void DJIonboardSDK::on_btn_plp_start_stop_clicked()
         api->serialDevice->displayLog();
         plp->isRunning=true;
         GPRSProtocolSend_6(QString("3000"));
-        DJIguid->start();
+        if(fabs(plp->avoidDistanceFront)>0.005)
+            DJIguid->start();
         plp->start();
     }
 }
@@ -2966,8 +2967,8 @@ void DJIonboardSDK::autoActivateSDK()
 
 void DJIonboardSDK::on_btn_Abortplp_clicked()
 {
-    DJIguid->stop();
     if(plp->isRunning){
+        DJIguid->stop();
         abortMission=true;
         emit abortEmit(QString("1"));
         GPRSProtocolSend_6(QString("4004"));
@@ -2999,6 +3000,8 @@ void DJIonboardSDK::errCodeSlot(const QString &err)
 {
     if(err.toInt()==1)
     {
+        if(plp->isUsingGUID==false&&fabs(plp->avoidDistanceFront)>0.005)
+            plp->isUsingGUID=true;
         sprintf(DJI::onboardSDK::buffer, "%s","Guidance, Guidance started");
         api->serialDevice->displayLog();
         GPRSProtocolSend_6(QString("5001"));
@@ -3013,6 +3016,7 @@ void DJIonboardSDK::errCodeSlot(const QString &err)
     }
     else if(err.toInt()==3)
     {
+        plp->isUsingGUID=false;
         sprintf(DJI::onboardSDK::buffer, "%s","Guidance, Guidance can not working");
         api->serialDevice->displayLog();
         GPRSProtocolSend_6(QString("5003"));
