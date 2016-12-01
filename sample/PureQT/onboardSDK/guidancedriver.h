@@ -25,6 +25,7 @@ public:
     void leave();
     int set_event();
     int wait_event();
+    int err_code;
 private:
     bool initGuiFlag;
     CRITICAL_SECTION  m_critical_section;
@@ -32,6 +33,8 @@ private:
     HANDLE      m_pipe_write;
 protected:
     void run();
+signals:
+    void emitErrorCode(const QString &err);
 };
 
 #endif // DJIGUIDANCE_H

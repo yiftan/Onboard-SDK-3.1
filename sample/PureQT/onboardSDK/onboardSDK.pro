@@ -24,7 +24,8 @@ HEADERS  += djionboardsdk.h \
     powerlinepatrol.h \
     gprs.h \
     socketserver.h \
-    guidancedriver.h
+    guidancedriver.h \
+    DJI_guidance.h
 
 SOURCES += main.cpp\
            djionboardsdk.cpp \

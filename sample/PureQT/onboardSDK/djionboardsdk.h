@@ -125,6 +125,7 @@ class DJIonboardSDK : public QMainWindow
     void on_comboBox_portName_currentIndexChanged(int index);
     void logSignalRecv(const QString &log);
     void malfunctionSlot(const QString &mal);
+    void errCodeSlot(const QString &err);
 
     void on_btn_coreSet_clicked();
     void on_btn_coreActive_clicked();

@@ -175,7 +175,6 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     CommandData=0;
     GPRSflag=0;
     GPRSst=0;
-    guidIsRunnig=false;
     for(int i=0;i<6;i++){
         ProtocolFlag[i]=false;
     }
@@ -469,7 +468,7 @@ void DJIonboardSDK::plpMissionCheck()
         //mouseClicked(ui->btn_plp_start_stop);
         on_btn_plp_start_stop_clicked();
     }
-    if(plp->plpstatus==6&&flight->getStatus()==1)//go home finnished and landing
+    if(plp->plpstatus==6&&flight->getStatus()==1)//landing finished
     {
         plp->plpstatus=1;
     }
@@ -1955,16 +1954,6 @@ void DJIonboardSDK::on_tmr_Broadcast()
 
     ui->lineEdit_Gui_Front->setText(QString(QString::number(distance_front)));
     ui->lineEdit_Gui_Bottom->setText(QString(QString::number(distance_down)));
-    if(guidIsRunnig)
-    {
-        ui->lineEdit_Gui_Status->setText("Working");
-    }
-    else
-    {
-        ui->lineEdit_Gui_Status->setText("Not working");
-    }
-
-
     // qDebug()<<api->getFilter().recvIndex;
 }
 
@@ -2406,6 +2395,7 @@ void DJIonboardSDK::initSDK()
     connect(this,SIGNAL(abortEmit(const QString&)),plp,SLOT(abortSignalSlot(const QString&)));
     connect(plp,SIGNAL(emitLog(const QString&)),this,SLOT(logSignalRecv(const QString&)));
     connect(ss,SIGNAL(emitMalfunction(const QString&)),this,SLOT(malfunctionSlot(const QString&)));
+    connect(DJIguid,SIGNAL(emitErrorCode(const QString&)),this,SLOT(errCodeSlot(const QString&)));
     refreshPort();
     setPort();
     setBaudrate();
@@ -2991,6 +2981,10 @@ void DJIonboardSDK::on_btn_Abortplp_clicked()
 }
 void DJIonboardSDK::logSignalRecv(const QString &log)
 {
+    if(log=="4006")
+    {
+        DJIguid->stop();
+    }
     GPRSProtocolSend_6(log);
 }
 
@@ -3001,17 +2995,39 @@ void DJIonboardSDK::malfunctionSlot(const QString &mal)
     GPRSProtocolSend_4(cnt++, mal,curPos.longitude, curPos.latitude);//发送故障检测信息E
 }
 
+void DJIonboardSDK::errCodeSlot(const QString &err)
+{
+    if(err.toInt()==1)
+    {
+        sprintf(DJI::onboardSDK::buffer, "%s","Guidance, Guidance started");
+        api->serialDevice->displayLog();
+        GPRSProtocolSend_6(QString("5001"));
+        ui->btn_Gui_start_stop->setText("started");
+    }
+    else if(err.toInt()==2)
+    {
+        sprintf(DJI::onboardSDK::buffer, "%s","Guidance, Guidance stopeed");
+        api->serialDevice->displayLog();
+        GPRSProtocolSend_6(QString("5002"));
+        ui->btn_Gui_start_stop->setText("stopped");
+    }
+    else if(err.toInt()==3)
+    {
+        sprintf(DJI::onboardSDK::buffer, "%s","Guidance, Guidance can not working");
+        api->serialDevice->displayLog();
+        GPRSProtocolSend_6(QString("5003"));
+        ui->btn_Gui_start_stop->setText("error");
+    }
+}
 
 void DJIonboardSDK::on_btn_Gui_start_stop_clicked()
 {
-    if(ui->btn_Gui_start_stop->text()=="stopped")
+    if(ui->btn_Gui_start_stop->text()=="stopped"||ui->btn_Gui_start_stop->text()=="error")
     {
         DJIguid->start();
-        ui->btn_Gui_start_stop->setText("started");
     }
-    else
+    else if(ui->btn_Gui_start_stop->text()=="started")
     {
         DJIguid->stop();
-        ui->btn_Gui_start_stop->setText("stopped");
     }
 }

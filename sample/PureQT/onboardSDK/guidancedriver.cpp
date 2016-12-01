@@ -16,12 +16,10 @@ PROCESS_VAL(e_timeout);
 GuidanceDriver guid;
 double distance_front;
 double distance_down;
-bool guidIsRunnig;
 
 int my_callback(int data_type, int data_len, char *content)
 {
     guid.enter();
-    guidIsRunnig=true;
     if (e_obstacle_distance == data_type && NULL != content)
     {
         obstacle_distance *oa = (obstacle_distance*)content;
@@ -38,6 +36,7 @@ GuidanceDriver::GuidanceDriver()
 {
     stopped=false;
     initGuiFlag=false;
+    err_code=0;
     InitializeCriticalSection( &m_critical_section );
     SECURITY_ATTRIBUTES   sa;
     sa.nLength = sizeof(sa);
@@ -83,19 +82,36 @@ int GuidanceDriver::wait_event()
     return ret;
 }
 
+/*
+emitErrorCode:
+1: start successfully;
+2: stopped;
+3: error;
+*/
 void GuidanceDriver::run()
 {
-    int err_code;
+    stopped=false;
     while(!stopped)
     {
         if(!initGuiFlag)
         {
-            reset_config();  // clear all data subscription
+            err_code=reset_config();  // clear all data subscription
+            if(err_code)
+                break;
             err_code = init_transfer(); //wait for board ready and init transfer thread
+            if(err_code)
+                break;
             select_obstacle_distance();
+            if(err_code)
+                break;
             err_code = set_sdk_event_handler(my_callback);
+            if(err_code)
+                break;
             err_code = start_transfer();
+            if(err_code)
+                break;
             initGuiFlag=true;
+            emit emitErrorCode(QString("1"));
         }
         else
         {
@@ -103,9 +119,20 @@ void GuidanceDriver::run()
         }
         msleep(200);
     }
-    stop_transfer();
-    release_transfer();
+    if(!err_code)
+    {
+        err_code=stop_transfer();
+    }
+    if(!err_code)
+        err_code=release_transfer();
     stopped=false;
-    guidIsRunnig=false;
     initGuiFlag=false;
+    if(err_code)
+    {
+        emit emitErrorCode(QString("3"));
+    }
+    else
+    {
+        emit emitErrorCode(QString("2"));
+    }
 }

@@ -455,10 +455,11 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
 
       //MovementControl API call
 
-      if (distance_front < avoidDistanceFront&&isUsingGUID){
-
+      if (distance_front < avoidDistanceFront&&isUsingGUID)
+      {
+          log=QString("5004");
+          emitLog(log);
 		  break;
-
 	  }
 
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);

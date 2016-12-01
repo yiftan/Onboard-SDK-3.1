@@ -25,7 +25,6 @@
 */
 extern  double distance_front;
 extern  double distance_down;
-extern  bool guidIsRunnig;
 enum e_sdk_err_code
 {
 	e_timeout = -7,			// time out
