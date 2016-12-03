@@ -255,22 +255,23 @@ void PowerLinePatrol::plpMission()
                     moveByPositionZDesired(tmpPos.height+1);
                     if (abortMission)
                     {
-						break;
+                        break;
                     }
                 } while(distance_front < avoidDistanceFront&&isUsingGUID);
                 tmpPos=api->getBroadcastData().pos;
-                moveByPositionZDesired(tmpPos.height+0.5);
-                moveByPositionXOffset(avoidDistanceFront);
-                do
+                moveByPositionZDesired(tmpPos.height+1);
+                moveByPositionXOffset(avoidDistanceFront+0.7);
+                downOffset=api->getBroadcastData().pos.height-recordPosition.height;
+                while(distance_down < downOffset&&isUsingGUID)
                 {
                     moveByPositionXOffset(1);
                     if (abortMission)
                     {
-						break;
-					}
+                        break;
+                    }
                     downOffset=api->getBroadcastData().pos.height-recordPosition.height;
-                } while(distance_down < downOffset&&isUsingGUID);
-                moveByPositionXOffset(0.5);
+                }
+                moveByPositionXOffset(0.7);
                 moveByPositionZDesired(recordPosition.height);
 				avoidance_flag = CalculateRadOffset(&nextPos);
                 haveObstacle=false;
@@ -296,9 +297,10 @@ void PowerLinePatrol::plpMission()
                     }
                 } while(distance_front < avoidDistanceFront&&isUsingGUID);
                 tmpPos=api->getBroadcastData().pos;
-                moveByPositionZDesired(tmpPos.height+0.5);
-                moveByPositionXOffset(avoidDistanceFront);
-                do
+                moveByPositionZDesired(tmpPos.height+1);
+                moveByPositionXOffset(avoidDistanceFront+0.7);
+                downOffset=api->getBroadcastData().pos.height-recordPosition.height;
+                while(distance_down < downOffset&&isUsingGUID)
                 {
                     moveByPositionXOffset(1);
                     if (abortMission)
@@ -306,8 +308,8 @@ void PowerLinePatrol::plpMission()
                         break;
                     }
                     downOffset=api->getBroadcastData().pos.height-recordPosition.height;
-                } while(distance_down < downOffset&&isUsingGUID);
-                moveByPositionXOffset(0.5);
+                }
+                moveByPositionXOffset(0.7);
                 moveByPositionZDesired(recordPosition.height);
                 avoidance_flag = CalculateRadOffset(&nextPos);
                 haveObstacle=false;
