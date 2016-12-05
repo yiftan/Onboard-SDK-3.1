@@ -1,9 +1,13 @@
 #include "powerlinepatrol.h"
 using namespace DJI::onboardSDK;
 
+#include "DJI_utility.h"
+#include "DJI_guidance.h"
+
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
+
 PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
 {
     this->api=api;
@@ -22,14 +26,24 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     isFinished=false;
     stopped=false;
     isStart=false;
+    isUsingGUID=false;
+    haveObstacle=false;
     setSpeed=2.0;
     setheight=2.0;
+    avoidDistanceFront=2.0;
+    avoidDistanceBottom=1.0;
     goHome.height=100;
     goHomeSpeed=15;
     goHome.latitude=30.265750643*DEG2RAD;
     goHome.longitude=120.11965452*DEG2RAD;
     statusMutex = new QMutex();
 }
+
+PowerLinePatrol::~PowerLinePatrol()
+{
+
+}
+
 void PowerLinePatrol::stop()
 {
     stopped=true;
@@ -76,6 +90,8 @@ void PowerLinePatrol::run()
                     }
                     else
                     {
+                        log="2004";
+                        emitLog(QString(log));
                         isRunning=true;
                         goHomeMission();
                         isRunning=false;
@@ -85,7 +101,6 @@ void PowerLinePatrol::run()
             }
         }
         stopped=true;
-        //msleep(1000);
     }
     stopped=false;
     //qDebug()<<QString("PLP Thread stoped");
@@ -172,12 +187,16 @@ PositionData PowerLinePatrol::nextPosition()
     }
     return pos;
 }
+
 void PowerLinePatrol::goHomeMission()
 {
     statusMutex->lock();
     plpstatus=8;
     statusMutex->unlock();
+    bool disableGuid=isUsingGUID;
+    isUsingGUID=false;
     moveBySpeedBodyFrame(&goHome,60000,0.5,15);
+    isUsingGUID=disableGuid;
     if(abortMission)
     {
         statusMutex->lock();
@@ -206,30 +225,103 @@ void PowerLinePatrol::plpMission()
 {
     startMission();
     PositionData nextPos=nextPosition();
+	
     while(nextPos.health)
     {
+        int avoidance_flag = 0;
         log="300"+QString(QString::number(nextPos.health));
         emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s%d","PLPMission, Fly to point ",nextPos.health);
         api->serialDevice->displayLog();
         //GPRSProtocolSend_6(QString("300"+QString(QString::number(nextPos.health))));
         //control yaw in ground frame, then control position in body frame, position offset calculated from gps.
+        PositionData tmpPos;
+        int downOffset=0.0;
         if(nextPos.health==getInfo().indexNumber)
         {
-            //moveByPositionBodyFrame(&nextPos,60000,0.5,15);
-            moveBySpeedBodyFrame(&nextPos,60000,0.5,15);
+           // moveByPositionBodyFrame(&nextPos,60000,0.5,15);
+			moveBySpeedBodyFrame(&nextPos, 60000, 0.5, 15);
 
-        }
+			//如果有障碍，执行避障算法；
+            if (haveObstacle)
+            {
+                sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, avoid obstacle ");
+                api->serialDevice->displayLog();
+				avoidance_flag = 1;  
+                PositionData recordPosition = api->getBroadcastData().pos;//记录当前高度
+                do
+                {
+                    tmpPos=api->getBroadcastData().pos;
+                    moveByPositionZDesired(tmpPos.height+1);
+                    if (abortMission)
+                    {
+                        break;
+                    }
+                } while(distance_front < avoidDistanceFront&&isUsingGUID);
+                tmpPos=api->getBroadcastData().pos;
+                moveByPositionZDesired(tmpPos.height+1);
+                moveByPositionXOffset(avoidDistanceFront+0.7);
+                downOffset=api->getBroadcastData().pos.height-recordPosition.height;
+                while(distance_down < downOffset&&isUsingGUID)
+                {
+                    moveByPositionXOffset(1);
+                    if (abortMission)
+                    {
+                        break;
+                    }
+                    downOffset=api->getBroadcastData().pos.height-recordPosition.height;
+                }
+                moveByPositionXOffset(0.7);
+                moveByPositionZDesired(recordPosition.height);
+				avoidance_flag = CalculateRadOffset(&nextPos);
+                haveObstacle=false;
+			}
+		}		
         else
         {
             //moveByPositionBodyFrame(&nextPos);
-            moveBySpeedBodyFrame(&nextPos);
+			moveBySpeedBodyFrame(&nextPos);
+            if (haveObstacle)
+            {
+                sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, avoid obstacle ");
+                api->serialDevice->displayLog();
+                avoidance_flag = 1;
+                PositionData recordPosition = api->getBroadcastData().pos;//记录当前高度
+                do
+                {
+                    tmpPos=api->getBroadcastData().pos;
+                    moveByPositionZDesired(tmpPos.height+1);
+                    if (abortMission)
+                    {
+                        break;
+                    }
+                } while(distance_front < avoidDistanceFront&&isUsingGUID);
+                tmpPos=api->getBroadcastData().pos;
+                moveByPositionZDesired(tmpPos.height+1);
+                moveByPositionXOffset(avoidDistanceFront+0.7);
+                downOffset=api->getBroadcastData().pos.height-recordPosition.height;
+                while(distance_down < downOffset&&isUsingGUID)
+                {
+                    moveByPositionXOffset(1);
+                    if (abortMission)
+                    {
+                        break;
+                    }
+                    downOffset=api->getBroadcastData().pos.height-recordPosition.height;
+                }
+                moveByPositionXOffset(0.7);
+                moveByPositionZDesired(recordPosition.height);
+                avoidance_flag = CalculateRadOffset(&nextPos);
+                haveObstacle=false;
+			}
         }
         if(abortMission)
         {
             break;
         }
-        nextPos=nextPosition();
+		if (avoidance_flag == 0 ){
+			nextPos = nextPosition();
+		}
     }
     if(abortMission)
     {
@@ -243,17 +335,11 @@ void PowerLinePatrol::plpMission()
         statusMutex->lock();
         plpstatus=7;
         statusMutex->unlock();
-        //isRunning=false;
         log="4006";
         emitLog(log);
         sprintf(DJI::onboardSDK::buffer, "%s","PLPMission, Finished...");
         api->serialDevice->displayLog();
-        //flight->task(Flight::TASK_GOHOME);
     }
-    /*on_btn_coreSetControl_clicked();
-    sleepmSec(1000);
-    on_btn_coreSetControl_clicked();*/
-    //flight->task(Flight::TASK_GOHOME);
 }
 
 void PowerLinePatrol::localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed,
@@ -337,6 +423,11 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
       else if(yawRemaining<0)
           yawCmd = yawRemaining > -1*yawRateRad ? yawRemaining : -1*yawRateRad;
     }
+    VelocityData curSpeed=api->getBroadcastData().v;
+    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
+    {
+        curSpeed=api->getBroadcastData().v;
+    }
     return 1;
 }
 
@@ -361,7 +452,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
     {
         speedFactor = goHomeSpeed;
     }
-    float MinSpeed = 0.1;
+    float MinSpeed = MINSPEED;
     Angle radOffset=0;
     double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
     double zCmd=targetPosition->height;
@@ -381,8 +472,10 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
             moveByYawRate(radOffset,targetPosition->height);
         }
     }
-    while(std::abs(curLocalOffset.x) > posThresholdInM || std::abs(curLocalOffset.y) > posThresholdInM || \
-          std::abs(curLocalOffset.z) > posThresholdInM)
+    if (xCmd > speedFactor)
+        xCmd = speedFactor;
+    while(fabs(curLocalOffset.x) > posThresholdInM || fabs(curLocalOffset.y) > posThresholdInM || \
+          fabs(curLocalOffset.z) > posThresholdInM)
     {
       // Check timeout
       if (elapsedTime >= timeoutInMs)
@@ -395,12 +488,21 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       }
 
       //MovementControl API call
+
+      if (distance_front < avoidDistanceFront&&isUsingGUID)
+      {
+          haveObstacle=true;
+          log=QString("5004");
+          emitLog(log);
+		  break;
+	  }
+
       flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
-      QEventLoop eventloop;
+      /*QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
-      eventloop.exec();
+      eventloop.exec();*/
       elapsedTime += 20;
-      //msleep(20);
+      msleep(20);
       //Get current position in required coordinates and units
       curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
       curPosition = api->getBroadcastData().pos;
@@ -417,97 +519,21 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       zCmd=targetPosition->height;
       if(xCmd<3*speedFactor)
       {
-          speedFactor *= 0.75;
+          speedFactor *= 0.7;
       }
       if(speedFactor<MinSpeed)
           speedFactor=MinSpeed;
       if (xCmd > speedFactor)
-        xCmd = speedFactor;
+          xCmd = speedFactor;
     }
-    return 1;
-}
-
-int PowerLinePatrol::moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs, float yawThresholdInDeg, float posThresholdInCm)
-{
-    uint8_t flag=0x93;//body frame, position control
-    // Get current poition
-    PositionData curPosition = api->getBroadcastData().pos;
-    DJI::Vector3dData curLocalOffset;
-    DJI::EulerAngle curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
-
-    //Convert position offset from first position to local coordinates
-    localOffsetFromGpsOffset(curLocalOffset, targetPosition, &curPosition);
-
-    //Conversions
-    double yawThresholdInRad = DEG2RAD*yawThresholdInDeg;
-    float32_t posThresholdInM = posThresholdInCm/100;
-
-    int elapsedTime = 0;
-    float speedFactor = setSpeed;
-    float MinSpeed = 0.1;
-    Angle radOffset=0;
-    double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
-    double zCmd=targetPosition->height;
-    radOffset=RAD2DEG*atan2(fabs(curLocalOffset.y),fabs(curLocalOffset.x));
-    if(curLocalOffset.x<0&&curLocalOffset.y<0)
-        radOffset=-180.0+radOffset;
-    else if(curLocalOffset.x>0&&curLocalOffset.y<0)
-        radOffset=-radOffset;
-    else if(curLocalOffset.x<0&&curLocalOffset.y>0)
-        radOffset=180-radOffset;
-    if(std::abs(curEuler.yaw - radOffset) > yawThresholdInRad)
+    VelocityData curSpeed=api->getBroadcastData().v;
+    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
     {
-        int cnt=50;
-        //Run multiple times to fix the influence of the inertia
-        while(cnt--)
+        if(abortMission)
         {
-            moveByYawRate(radOffset,curPosition.height);
+            break;
         }
-    }
-    if (xCmd > speedFactor)
-      xCmd = speedFactor;
-    while(std::abs(curLocalOffset.x) > posThresholdInM || std::abs(curLocalOffset.y) > posThresholdInM || \
-          std::abs(curLocalOffset.z) > posThresholdInM)
-    {
-      // Check timeout
-      if (elapsedTime >= timeoutInMs)
-      {
-          break;
-      }
-      if(abortMission)
-      {
-          break;
-      }
-
-      //MovementControl API call
-      flight->setMovementControl(flag,xCmd, 0, zCmd, radOffset);
-      /*QEventLoop eventloop;
-      QTimer::singleShot(20, &eventloop, SLOT(quit()));
-      eventloop.exec();*/
-      elapsedTime += 20;
-      //msleep(20);
-      //Get current position in required coordinates and units
-      curEuler = Flight::toEulerAngle(api->getBroadcastData().q);
-      curPosition = api->getBroadcastData().pos;
-      localOffsetFromGpsOffset(curLocalOffset, targetPosition, &curPosition);
-
-      radOffset=RAD2DEG*atan2(fabs(curLocalOffset.y),fabs(curLocalOffset.x));
-      if(curLocalOffset.x<0&&curLocalOffset.y<0)
-          radOffset=-180.0+radOffset;
-      else if(curLocalOffset.x>0&&curLocalOffset.y<0)
-          radOffset=-radOffset;
-      else if(curLocalOffset.x<0&&curLocalOffset.y>0)
-          radOffset=180-radOffset;
-      xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
-      zCmd=targetPosition->height;
-      if(xCmd<2*speedFactor)
-      {
-          speedFactor *= 0.75;
-      }
-      if(speedFactor<MinSpeed)
-          speedFactor=MinSpeed;
-      if (xCmd > speedFactor)
-        xCmd = speedFactor;
+        curSpeed=api->getBroadcastData().v;
     }
     return 1;
 }
@@ -607,6 +633,289 @@ int PowerLinePatrol::moveByPositionOffset(float32_t xOffsetDesired, float32_t yO
 
   }
   return 1;
+}
+
+int  PowerLinePatrol::moveByPositionXOffset(float32_t xOffsetDesired, int timeoutInMs, float posThresholdInCm)
+{
+    uint8_t flag = 0x5b; //Position Control
+	// Get current poition
+	PositionData curPosition = api->getBroadcastData().pos;
+	PositionData originPosition = curPosition;
+	DJI::Vector3dData curLocalOffset;
+
+	//Convert position offset from first position to local coordinates
+	localOffsetFromGpsOffset(curLocalOffset, &curPosition, &originPosition);
+
+	//See how much farther we have to go
+	float32_t xOffsetRemaining = xOffsetDesired - sqrt(curLocalOffset.x*curLocalOffset.x + curLocalOffset.y*curLocalOffset.y);
+	//Conversions
+	float32_t posThresholdInM = posThresholdInCm / 100;
+	int elapsedTime = 0;
+	float speedFactor = setSpeed;
+    float MinSpeed = MINSPEED;
+	float xCmd;
+
+	if (xOffsetDesired > 0)
+		xCmd = xOffsetDesired < speedFactor ? xOffsetDesired : speedFactor;
+	else if (xOffsetDesired < 0)
+		xCmd = xOffsetDesired > -1 * speedFactor ? xOffsetDesired : -1 * speedFactor;
+	else
+		xCmd = 0;
+
+
+	//! Main closed-loop receding setpoint position control
+	while (std::abs(xOffsetRemaining) > posThresholdInM)
+	{
+		// Check timeout
+		if (elapsedTime >= timeoutInMs)
+		{
+			break;
+		}
+		if (abortMission)
+		{
+			break;
+		}
+		//MovementControl API call
+
+		flight->setMovementControl(flag, xCmd, 0,curPosition.height , 0);
+
+		//sleep(20)
+        msleep(20);
+
+		elapsedTime += 20;
+
+		//Get current position in required coordinates and units
+		curPosition = api->getBroadcastData().pos;
+		localOffsetFromGpsOffset(curLocalOffset, &curPosition, &originPosition);
+
+		//See how much farther we have to go
+		xOffsetRemaining = xOffsetDesired - sqrt(curLocalOffset.x*curLocalOffset.x + curLocalOffset.y*curLocalOffset.y);
+		//See if we need to modify the setpoint
+        xCmd = xOffsetRemaining;
+        if (fabs(xCmd)<3 * speedFactor)
+        {
+            speedFactor *= 0.75;
+        }
+        if (speedFactor<MinSpeed)
+            speedFactor = MinSpeed;
+        if (xCmd > 0)
+            xCmd = xCmd < speedFactor ? xCmd : speedFactor;
+        else if (xCmd < 0)
+            xCmd = xCmd > -1 * speedFactor ? xCmd : -1 * speedFactor;
+        else
+            xCmd = 0;
+	}
+    VelocityData curSpeed=api->getBroadcastData().v;
+    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
+    {
+        if(abortMission)
+        {
+            break;
+        }
+        curSpeed=api->getBroadcastData().v;
+    }
+	return 1;
+}
+
+
+int  PowerLinePatrol::moveByPositionZDesired(float32_t zDesired, int timeoutInMs, float posThresholdInCm)
+{
+	uint8_t flag = 0x4b; //Position Control
+
+	// Get current poition
+	PositionData curPosition = api->getBroadcastData().pos;
+	//See how much farther we have to go
+    float32_t zOffsetRemaining = zDesired - curPosition.height;
+
+	//Conversions
+	float32_t posThresholdInM = posThresholdInCm / 100;
+	int elapsedTime = 0;
+    float speedFactor = 1.5;
+    float MinSpeed = MINSPEED;
+    float zCmd=zOffsetRemaining;
+    if (zCmd > 0)
+        zCmd = zCmd < speedFactor ? zCmd : speedFactor;
+    else if (zCmd < 0)
+        zCmd = zCmd > -1 * speedFactor ? zCmd : -1 * speedFactor;
+    else
+        zCmd = 0;
+
+	//! Main closed-loop receding setpoint position control
+	while (std::abs(zOffsetRemaining) > posThresholdInM)
+	{
+		// Check timeout
+		if (elapsedTime >= timeoutInMs)
+		{
+			break;
+		}
+		if (abortMission)
+		{
+			break;
+		}
+		//MovementControl API call
+
+		flight->setMovementControl(flag,0, 0, zCmd, 0);
+
+		//sleep(20)
+        msleep(20);
+		elapsedTime += 20;
+
+		//Get current position in required coordinates and units
+		curPosition = api->getBroadcastData().pos;
+
+		//See how much farther we have to go
+		zOffsetRemaining = zDesired - curPosition.height;
+        zCmd =  zOffsetRemaining;
+		//See if we need to modify the setpoint
+        if (fabs(zCmd)<3 * speedFactor)
+		{
+			speedFactor *= 0.75;
+		}
+		if (speedFactor<MinSpeed)
+			speedFactor = MinSpeed;
+
+        if (zCmd > 0)
+            zCmd = zCmd < speedFactor ? zCmd : speedFactor;
+        else if (zCmd < 0)
+            zCmd = zCmd > -1 * speedFactor ? zCmd : -1 * speedFactor;
+        else
+            zCmd = 0;
+	}
+    VelocityData curSpeed=api->getBroadcastData().v;
+    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
+    {
+        if(abortMission)
+        {
+            break;
+        }
+        curSpeed=api->getBroadcastData().v;
+    }
+	return 1;
+}
+int  PowerLinePatrol::moveByPositionZOffset(float32_t zOffsetDesired, int timeoutInMs, float posThresholdInCm)
+{
+	uint8_t flag = 0x4b; //Position Control
+
+    // Get current poition
+	PositionData curPosition = api->getBroadcastData().pos;
+	PositionData originPosition = curPosition;
+    DJI::Vector3dData curLocalOffset;
+
+
+    //Convert position offset from first position to local coordinates
+    localOffsetFromGpsOffset(curLocalOffset, &curPosition, &originPosition);
+
+    //See how much farther we have to go
+
+    float32_t zOffsetRemaining = zOffsetDesired - curLocalOffset.z;
+
+	//Conversions
+	float32_t posThresholdInM = posThresholdInCm / 100;
+	int elapsedTime = 0;
+	float speedFactor = setSpeed;
+    float MinSpeed = MINSPEED;
+	
+	float zCmd;
+
+	/*! Calculate the inputs to send the position controller. We implement basic
+	receding setpoint position control and the setpoint is always 1 m away
+	from the current position - until we get within a threshold of the goal.
+	From that point on, we send the remaining distance as the setpoint.
+	!*/
+
+	zCmd = curPosition.height + zOffsetDesired;
+
+	//! Main closed-loop receding setpoint position control
+	while (std::abs(zOffsetRemaining) > posThresholdInM)
+	{
+		// Check timeout
+		if (elapsedTime >= timeoutInMs)
+		{
+			break;
+		}
+		if (abortMission)
+		{
+			break;
+		}
+		//MovementControl API call
+
+		flight->setMovementControl(flag, 0, 0, zCmd, 0);
+
+		//sleep(20)
+		QEventLoop eventloop;
+		QTimer::singleShot(20, &eventloop, SLOT(quit()));
+		eventloop.exec();
+
+		elapsedTime += 20;
+
+		//Get current position in required coordinates and units
+		curPosition = api->getBroadcastData().pos;
+		localOffsetFromGpsOffset(curLocalOffset, &curPosition, &originPosition);
+
+		//See how much farther we have to go
+		zOffsetRemaining = zOffsetDesired - curLocalOffset.z;
+		zCmd = curPosition.height + zOffsetRemaining;
+		//See if we need to modify the setpoint
+		if (zCmd<3 * speedFactor)
+		{
+			speedFactor *= 0.75;
+		}
+		if (speedFactor<MinSpeed)
+			speedFactor = MinSpeed;
+		if (zCmd > speedFactor)
+			zCmd = speedFactor;
+
+
+	}
+	return 1;
+}
+
+int PowerLinePatrol::obstacle(int health){
+	int t = 0;
+	if (health == 2){
+		PositionData curPosition = api->getBroadcastData().pos;
+	     float32_t z = curPosition.height;
+		if (z > 2 && z < 5){
+			t = 1;
+		}
+	}
+	return t;
+
+}
+int  PowerLinePatrol::CalculateRadOffset(PositionData* targetPosition){
+	
+	
+	
+	double curYawInRad = Flight::toEulerAngle(api->getBroadcastData().q).yaw;
+	double yawRemaining = 0;
+	
+
+	PositionData curPosition = api->getBroadcastData().pos;
+	DJI::Vector3dData curLocalOffset;
+	//Convert position offset from first position to local coordinates
+	localOffsetFromGpsOffset(curLocalOffset, targetPosition, &curPosition);
+
+	//Conversions
+
+	Angle radOffset = 0;
+	radOffset = RAD2DEG*atan2(fabs(curLocalOffset.y), fabs(curLocalOffset.x));
+	if (curLocalOffset.x<0 && curLocalOffset.y<0)
+		radOffset = -180.0 + radOffset;
+	else if (curLocalOffset.x>0 && curLocalOffset.y<0)
+		radOffset = -radOffset;
+	else if (curLocalOffset.x<0 && curLocalOffset.y>0)
+		radOffset = 180 - radOffset;
+	double yawDesiredRad = radOffset*DEG2RAD;
+	if (yawDesiredRad>0 && curYawInRad<0 && (fabs(yawDesiredRad) + fabs(curYawInRad))>(180 * DEG2RAD)){
+		yawRemaining = curYawInRad - yawDesiredRad;
+	}
+	else
+		yawRemaining = yawDesiredRad - curYawInRad;
+	if (fabs(yawRemaining) > (90 * DEG2RAD)){
+		return 0;
+	}
+	else 
+		return 1;
 }
 void PowerLinePatrol::abortSignalSlot(const QString &abortMission)
 {

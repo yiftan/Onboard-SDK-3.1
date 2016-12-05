@@ -23,14 +23,17 @@ HEADERS  += djionboardsdk.h \
             QonboardSDK.h \
     powerlinepatrol.h \
     gprs.h \
-    socketserver.h
+    socketserver.h \
+    guidancedriver.h \
+    DJI_guidance.h
 
 SOURCES += main.cpp\
            djionboardsdk.cpp \
            QonboardSDK.cpp \
     powerlinepatrol.cpp \
     gprs.cpp \
-    socketserver.cpp
+    socketserver.cpp \
+    guidancedriver.cpp
 
 DJILIB += ONBOARDSDK\
           #GROUNDSTATION\

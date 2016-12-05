@@ -20,6 +20,14 @@ sample/PureQT/build-onboardSDK-msvc2013-Debug/
 sample/PureQT/build-onboardSDK-*
 sample/PureQT/onboardSDK/onboardSDK.pro.user
 
+sample/PureQT/onboardSDK/Debug/
+sample/PureQT/onboardSDK/GeneratedFiles/
+sample/PureQT/onboardSDK/x64/
+sample/PureQT/onboardSDK/*.sdf
+sample/PureQT/onboardSDK/*.sln
+sample/PureQT/onboardSDK/*.suo
+sample/PureQT/onboardSDK/*.vcxproj*
+
 sample/commandline/build-conboardSDK-5_5_1Mingw-Debug/
 sample/commandline/build-conboardSDK-5_5_1Mingw-Release/
 sample/commandline/build-conboardSDK-msvc2013-Release/

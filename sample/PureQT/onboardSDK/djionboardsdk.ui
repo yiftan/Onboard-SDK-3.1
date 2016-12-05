@@ -60,7 +60,7 @@
         <item>
          <widget class="QTabWidget" name="tabWidget">
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="tbFlight">
            <attribute name="title">
@@ -7093,6 +7093,78 @@
                    </item>
                   </layout>
                  </widget>
+                 <widget class="QGroupBox" name="formGroupBox_2">
+                  <property name="geometry">
+                   <rect>
+                    <x>310</x>
+                    <y>10</y>
+                    <width>197</width>
+                    <height>139</height>
+                   </rect>
+                  </property>
+                  <property name="title">
+                   <string>Guidance</string>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout_8">
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_61" stretch="0,3">
+                     <item>
+                      <widget class="QLabel" name="label_79">
+                       <property name="maximumSize">
+                        <size>
+                         <width>60</width>
+                         <height>29</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>Front </string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="lineEdit_Gui_Front">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_133" stretch="0,3">
+                     <item>
+                      <widget class="QLabel" name="label_80">
+                       <property name="maximumSize">
+                        <size>
+                         <width>60</width>
+                         <height>29</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>Bottom</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="lineEdit_Gui_Bottom"/>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="btn_Gui_start_stop">
+                     <property name="text">
+                      <string>stopped</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
                 </widget>
                </item>
               </layout>
@@ -7207,18 +7279,18 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="btg_cameraRoll"/>
   <buttongroup name="btg_flightHL"/>
-  <buttongroup name="btg_flightYL"/>
-  <buttongroup name="btg_flightSM"/>
-  <buttongroup name="btg_flightTask"/>
-  <buttongroup name="btg_cameraMode"/>
-  <buttongroup name="btg_flightVL"/>
-  <buttongroup name="btg_cameraAngle"/>
-  <buttongroup name="btg_flightCL"/>
-  <buttongroup name="btg_vrcGear"/>
   <buttongroup name="btg_cameraYaw"/>
+  <buttongroup name="btg_flightCL"/>
+  <buttongroup name="btg_cameraAngle"/>
+  <buttongroup name="btg_flightVL"/>
+  <buttongroup name="btg_vrcGear"/>
+  <buttongroup name="btg_cameraRoll"/>
+  <buttongroup name="btg_flightYL"/>
   <buttongroup name="btg_cameraPitch"/>
+  <buttongroup name="btg_flightSM"/>
   <buttongroup name="btg_vrcMode"/>
+  <buttongroup name="btg_cameraMode"/>
+  <buttongroup name="btg_flightTask"/>
  </buttongroups>
 </ui>

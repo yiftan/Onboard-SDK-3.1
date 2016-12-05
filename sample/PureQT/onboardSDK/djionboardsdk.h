@@ -22,13 +22,14 @@
 #include "powerlinepatrol.h"
 #include "gprs.h"
 #include "socketserver.h"
+#include "guidancedriver.h"
 
 #define   C_EARTH (double) 6378137.0
 #define   DEG2RAD (double)0.01745329252
 #define   RAD2DEG (double)57.29577951308
 #define   SDKCOM  "COM4"
 #define   GPRSCOM "COM8"
-#define   ACTIVEPERIOD 1500
+#define   ACTIVEPERIOD 1000
 using namespace DJI;
 using namespace DJI::onboardSDK;
 
@@ -47,6 +48,7 @@ class DJIonboardSDK : public QMainWindow
     void releaseControl();
 
   private:
+//	int guidanceTest();
     void setBaudrate();
     void setGPRSBaudrate();
     void setPort();
@@ -110,13 +112,6 @@ class DJIonboardSDK : public QMainWindow
     void initWayPoint();
     void initVirtualRC();
     void initGPRS();
-    void plpMission();
-    void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
-    int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
-                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
-    int moveByPositionBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30.0);
-    int moveByYawRate(float32_t yawDesired, float32_t zDesired, int timeoutInMs=60000, float yawThresholdIndeg=0.5, float posDesiredInCm=10);
-    int moveBySpeedBodyFrame(PositionData* targetPosition, int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=35.0);
     void sleepmSec(int mSec);
     void mouseClicked(QWidget* wid);
 
@@ -130,6 +125,7 @@ class DJIonboardSDK : public QMainWindow
     void on_comboBox_portName_currentIndexChanged(int index);
     void logSignalRecv(const QString &log);
     void malfunctionSlot(const QString &mal);
+    void errCodeSlot(const QString &err);
 
     void on_btn_coreSet_clicked();
     void on_btn_coreActive_clicked();
@@ -188,7 +184,7 @@ class DJIonboardSDK : public QMainWindow
 
     void on_btn_flight_frount_pressed();
     void on_btn_flight_back_pressed();
-    void on_btn_flight_send_clicked();
+  // void on_btn_flight_send_clicked();
     void on_btn_flight_runTask_clicked();
     void on_btn_flight_arm_clicked(bool checked);
     void on_btn_flight_up_pressed();
@@ -306,6 +302,7 @@ class DJIonboardSDK : public QMainWindow
     void on_btn_plp_start_stop_clicked();
 
     void on_lineEdit_GPRSsend_textChanged(const QString &text);
+    void on_btn_Gui_start_stop_clicked();
 
 private:
 #ifdef GROUNDSTATION
@@ -409,6 +406,8 @@ private:
     WayPointData wayPointDataTmp;
 
     PowerLinePatrol *plp;
+
+    GuidanceDriver *DJIguid;
 
     QStringList ports;
 
