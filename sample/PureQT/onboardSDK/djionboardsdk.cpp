@@ -175,6 +175,8 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     CommandData=0;
     GPRSflag=0;
     GPRSst=0;
+    isSendActivated=false;
+    isSendConnectOk=false;
     for(int i=0;i<6;i++){
         ProtocolFlag[i]=false;
     }
@@ -337,7 +339,6 @@ void DJIonboardSDK::on_tmr_autoSendStatus()
 void DJIonboardSDK::plpMissionCheck()
 {
     static uint32_t origintime=0;
-    static int sendActivateOk=0;
     uint32_t curtime=api->getTime().time;
     uint32_t timeinterval=curtime-origintime;
     origintime=curtime;
@@ -348,11 +349,15 @@ void DJIonboardSDK::plpMissionCheck()
     if(!GPRSport->isOpen()&&!activateGPRSTimer->isActive())
         activateGPRSTimer->start();
 
-    if(sendActivateOk==0&&GPRSConnectflag&&ui->btn_coreSetControl->text()=="Release Control")
+    if(isSendConnectOk&&GPRSConnectflag)
     {
         GPRSProtocolSend_6(QString("1001"));
+        isSendConnectOk=false;
+    }
+    if(isSendActivated&&GPRSConnectflag)
+    {
         GPRSProtocolSend_6(QString("2001"));
-        sendActivateOk=1;
+        isSendActivated=false;
     }
     if(ProtocolFlag[5])
     {
@@ -781,6 +786,7 @@ void DJIonboardSDK::GPRSPortCtl()
     {
         GPRSConnectflag=1;
         ui->lineEdit_GPRSres->setText("connect ok");
+        isSendConnectOk=true;
         //st=3;
     }
     GPRSBUF.clear();
@@ -2838,7 +2844,9 @@ void DJIonboardSDK::autoActivateGPRS()
         {
             GPRSPortCtl();
             if(GPRSConnectflag==1)
+            {
                 cnt=2;
+            }
         }
     }
     else if(cnt==2)
@@ -2955,6 +2963,7 @@ void DJIonboardSDK::autoActivateSDK()
             {
                 plp->isObtainControl=true;
                 activateSDKTimer->stop();
+                isSendActivated=true;
                 cnt=0;
                 cntin=-1;
                 //GPRSProtocolSend_6(QString("2001"));

@@ -336,6 +336,8 @@ private:
     int GPRSflag;
     int GPRSst;
     int GPRSConnectflag;
+    bool isSendActivated;
+    bool isSendConnectOk;
     QString ProtocolHead;
     bool ProtocolFlag[6];/*协议解析结果
                           (0:飞行器参数状态查询;
