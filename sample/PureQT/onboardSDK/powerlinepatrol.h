@@ -21,6 +21,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 
+#define MINSPEED 0.0
 namespace DJI
 {
 namespace onboardSDK

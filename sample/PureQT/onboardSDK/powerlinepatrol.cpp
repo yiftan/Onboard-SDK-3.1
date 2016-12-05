@@ -452,7 +452,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
     {
         speedFactor = goHomeSpeed;
     }
-    float MinSpeed = 0.2;
+    float MinSpeed = MINSPEED;
     Angle radOffset=0;
     double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
     double zCmd=targetPosition->height;
@@ -652,7 +652,7 @@ int  PowerLinePatrol::moveByPositionXOffset(float32_t xOffsetDesired, int timeou
 	float32_t posThresholdInM = posThresholdInCm / 100;
 	int elapsedTime = 0;
 	float speedFactor = setSpeed;
-    float MinSpeed = 0.2;
+    float MinSpeed = MINSPEED;
 	float xCmd;
 
 	if (xOffsetDesired > 0)
@@ -731,7 +731,7 @@ int  PowerLinePatrol::moveByPositionZDesired(float32_t zDesired, int timeoutInMs
 	float32_t posThresholdInM = posThresholdInCm / 100;
 	int elapsedTime = 0;
     float speedFactor = 1.5;
-    float MinSpeed = 0.2;
+    float MinSpeed = MINSPEED;
     float zCmd=zOffsetRemaining;
     if (zCmd > 0)
         zCmd = zCmd < speedFactor ? zCmd : speedFactor;
@@ -813,7 +813,7 @@ int  PowerLinePatrol::moveByPositionZOffset(float32_t zOffsetDesired, int timeou
 	float32_t posThresholdInM = posThresholdInCm / 100;
 	int elapsedTime = 0;
 	float speedFactor = setSpeed;
-    float MinSpeed = 0.2;
+    float MinSpeed = MINSPEED;
 	
 	float zCmd;
 
