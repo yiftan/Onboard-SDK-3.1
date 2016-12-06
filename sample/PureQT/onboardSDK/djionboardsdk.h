@@ -75,6 +75,8 @@ class DJIonboardSDK : public QMainWindow
     void GPRSProtocolSend_6(QString StatusCode);//发送状态编码T
     void GPRSProtocolSend_7(char res, double Lon, double Lat);//设置当前点为飞行器返航点R
     void GPRSProtocolSend_7(char res);//发送返航点设置查询协议解析结果R
+    void GPRSProtocolSend_8(double Lon, double Lat);//发送当前点坐标记录轨迹G
+    void GPRSProtocolSend_8(char res);//发送当前坐标轨迹记录协议解析G
 
   protected:
     void closeEvent(QCloseEvent *);
@@ -337,13 +339,14 @@ private:
     int GPRSst;
     int GPRSConnectflag;
     QString ProtocolHead;
-    bool ProtocolFlag[6];/*协议解析结果
+    bool ProtocolFlag[7];/*协议解析结果
                           (0:飞行器参数状态查询;
                            1:飞行器参数设置;
                            2:导航路径设置;
                            3:飞行器控制命令设置;
                            4:故障信息上传结果
-                           5:设置当前飞行器坐标为返航点)*/
+                           5:设置当前飞行器坐标为返航点
+                           6:获取当前经纬度坐标[记录轨迹])*/
     struct FlightStaSet{
         double Height;
         double v;
