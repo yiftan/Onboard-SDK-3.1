@@ -359,6 +359,11 @@ void DJIonboardSDK::plpMissionCheck()
         GPRSProtocolSend_6(QString("2001"));
         isSendActivated=false;
     }
+    if(ProtocolFlag[6])
+    {
+        GPRSProtocolSend_8(api->getBroadcastData().pos.longitude,api->getBroadcastData().pos.latitude);
+        ProtocolFlag[6]=false;
+    }
     if(ProtocolFlag[5])
     {
         plp->goHome.latitude=api->getBroadcastData().pos.latitude;
