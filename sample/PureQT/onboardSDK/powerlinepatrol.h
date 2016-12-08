@@ -69,13 +69,13 @@ public:
     void sleepmSec(int mSec);
     void localOffsetFromGpsOffset(DJI::Vector3dData& deltaNed, PositionData* target, PositionData* origin);
     int moveByYawRate(float32_t yawDesired, float32_t zDesired,
-                      int timeoutInMs=60000, float yawThresholdIndeg=0.5, float posDesiredInCm=10);
-    int moveBySpeedBodyFrame(PositionData* targetPosition,int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
+                      int timeoutInMs=120000, float yawThresholdIndeg=0.5, float posDesiredInCm=5);
+    int moveBySpeedBodyFrame(PositionData* targetPosition,int timeoutInMs=120000, float yawThresholdInDeg=0.5, float posThresholdInCm=5);
     int moveByPositionOffset(float32_t xOffsetDesired, float32_t yOffsetDesired, float32_t zOffsetDesired, float32_t yawDesired,
-                             int timeoutInMs=60000, float yawThresholdInDeg=0.5, float posThresholdInCm=30);
-    int moveByPositionZDesired(float32_t zDesired, int timeoutInMs = 60000, float posThresholdInCm = 10);
-    int moveByPositionXOffset(float32_t xOffsetDesired, int timeoutInMs = 60000, float posThresholdInCm = 30);
-    int moveByPositionZOffset(float32_t zOffsetDesired, int timeoutInMs=60000, float posThresholdInCm=10);
+                             int timeoutInMs=120000, float yawThresholdInDeg=0.5, float posThresholdInCm=5);
+    int moveByPositionZDesired(float32_t zDesired, int timeoutInMs = 120000, float posThresholdInCm = 10);
+    int moveByPositionXOffset(float32_t xOffsetDesired, int timeoutInMs = 120000, float posThresholdInCm = 15);
+    int moveByPositionZOffset(float32_t zOffsetDesired, int timeoutInMs=120000, float posThresholdInCm=5);
 	int obstacle(int health);
 	int CalculateRadOffset(PositionData* targetPosition);
 public slots:

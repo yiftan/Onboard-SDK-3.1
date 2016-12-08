@@ -12,6 +12,8 @@ void socketServer::stop()
 
 void socketServer::run()
 {
+    QProcess qp;
+    qp.startDetached("F:/GIT_project/client/Debug/client.exe");
     WORD wVersionRequested;
     WSADATA wsaData;
     int ret, length;

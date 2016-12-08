@@ -185,7 +185,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     GPRSCommand[2]=QString("AT+CGATT=1");
     GPRSCommand[3]=QString("AT+CIPCSGP=1,\"CMNET\"");
     GPRSCommand[4]=QString("AT+CLPORT=\"TCP\",\"2000\"");
-    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.110.58\",\"9876\"");//IP
+    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.110.172\",\"9876\"");//IP
     GPRSCommand[6]=QString("AT+CIPSHUT");
     GPRSConnectflag=0;
     setspeed=2.0;
@@ -361,7 +361,7 @@ void DJIonboardSDK::plpMissionCheck()
     }
     if(ProtocolFlag[6])
     {
-        GPRSProtocolSend_8(api->getBroadcastData().pos.longitude,api->getBroadcastData().pos.latitude);
+        GPRSProtocolSend_8(api->getBroadcastData().pos.longitude*RAD2DEG,api->getBroadcastData().pos.latitude*RAD2DEG);
         ProtocolFlag[6]=false;
     }
     if(ProtocolFlag[5])
@@ -3074,7 +3074,7 @@ void DJIonboardSDK::malfunctionSlot(const QString &mal)
 {
     static int cnt=1;
     PositionData curPos=api->getBroadcastData().pos;
-    GPRSProtocolSend_4(cnt++, mal,curPos.longitude, curPos.latitude);//发送故障检测信息E
+    GPRSProtocolSend_4(cnt++, mal,curPos.longitude*RAD2DEG, curPos.latitude*RAD2DEG);//发送故障检测信息E
 }
 
 void DJIonboardSDK::errCodeSlot(const QString &err)

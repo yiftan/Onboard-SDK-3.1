@@ -32,8 +32,8 @@ PowerLinePatrol::PowerLinePatrol(CoreAPI *api, Flight *flight)
     setheight=2.0;
     avoidDistanceFront=2.0;
     avoidDistanceBottom=1.0;
-    goHome.height=100;
-    goHomeSpeed=15;
+    goHome.height=80;
+    goHomeSpeed=5;
     goHome.latitude=30.265750643*DEG2RAD;
     goHome.longitude=120.11965452*DEG2RAD;
     statusMutex = new QMutex();
@@ -195,7 +195,7 @@ void PowerLinePatrol::goHomeMission()
     statusMutex->unlock();
     bool disableGuid=isUsingGUID;
     isUsingGUID=false;
-    moveBySpeedBodyFrame(&goHome,60000,0.5,15);
+    moveBySpeedBodyFrame(&goHome,120000,0.5,5);
     isUsingGUID=disableGuid;
     if(abortMission)
     {
@@ -240,7 +240,7 @@ void PowerLinePatrol::plpMission()
         if(nextPos.health==getInfo().indexNumber)
         {
            // moveByPositionBodyFrame(&nextPos,60000,0.5,15);
-			moveBySpeedBodyFrame(&nextPos, 60000, 0.5, 15);
+            moveBySpeedBodyFrame(&nextPos, 120000, 0.5, 5);
 
 			//如果有障碍，执行避障算法；
             if (haveObstacle)
@@ -424,7 +424,7 @@ int PowerLinePatrol::moveByYawRate(float32_t yawDesired, float32_t zDesired, int
           yawCmd = yawRemaining > -1*yawRateRad ? yawRemaining : -1*yawRateRad;
     }
     VelocityData curSpeed=api->getBroadcastData().v;
-    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
+    while(fabs(curSpeed.x)>0.01||fabs(curSpeed.y)>0.01)
     {
         curSpeed=api->getBroadcastData().v;
     }
@@ -445,7 +445,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
     //Conversions
     double yawThresholdInRad = DEG2RAD*yawThresholdInDeg;
     float32_t posThresholdInM = posThresholdInCm/100;
-
+    double xRemaining=0.0;
     int elapsedTime = 0;
     float speedFactor = setSpeed;
     if(plpstatus==8)
@@ -455,6 +455,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
     float MinSpeed = MINSPEED;
     Angle radOffset=0;
     double xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
+    xRemaining=xCmd;
     double zCmd=targetPosition->height;
     radOffset=RAD2DEG*atan2(fabs(curLocalOffset.y),fabs(curLocalOffset.x));
     if(curLocalOffset.x<0&&curLocalOffset.y<0)
@@ -496,8 +497,22 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
           emitLog(log);
 		  break;
 	  }
-
-      flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
+      if(xRemaining<1.2)
+      {
+          if(fabs(curLocalOffset.x)>speedFactor)
+          {
+              curLocalOffset.x = curLocalOffset.x > 0 ? speedFactor : -1*speedFactor;
+          }
+          if(fabs(curLocalOffset.y)>speedFactor)
+          {
+              curLocalOffset.y = curLocalOffset.y > 0 ? speedFactor : -1*speedFactor;
+          }
+          flight->setMovementControl(0x50,curLocalOffset.x,curLocalOffset.y,zCmd,curEuler.yaw*RAD2DEG);
+      }
+      else
+      {
+          flight->setMovementControl(flag,xCmd, 0, zCmd,  radOffset);
+      }
       /*QEventLoop eventloop;
       QTimer::singleShot(20, &eventloop, SLOT(quit()));
       eventloop.exec();*/
@@ -516,6 +531,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
       else if(curLocalOffset.x<0&&curLocalOffset.y>0)
           radOffset=180-radOffset;
       xCmd=sqrt(curLocalOffset.x*curLocalOffset.x+curLocalOffset.y*curLocalOffset.y);
+      xRemaining=xCmd;
       zCmd=targetPosition->height;
       if(xCmd<3*speedFactor)
       {
@@ -527,7 +543,7 @@ int PowerLinePatrol::moveBySpeedBodyFrame(PositionData* targetPosition, int time
           xCmd = speedFactor;
     }
     VelocityData curSpeed=api->getBroadcastData().v;
-    while(fabs(curSpeed.x)>0.05||fabs(curSpeed.y)>0.05)
+    while(fabs(curSpeed.x)>0.01||fabs(curSpeed.y)>0.01)
     {
         if(abortMission)
         {
