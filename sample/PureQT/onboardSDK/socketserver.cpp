@@ -52,20 +52,25 @@ void socketServer::run()
 
     char buf[50];
     QString mal;
+    QTime time;
+    time.start();
     while (!stopped)
     {
         memset(buf, '0', sizeof(buf));
         ret = recv(sServer, buf, 50, 0);
-        if (ret == SOCKET_ERROR)
+        if(time.elapsed()>=1200)
         {
-            break;
-        }
-        //cout << buf << endl;
-        if(ret>0)
-        {
-            mal=QString(buf);
-            emit emitMalfunction(mal);
-            qDebug()<<buf;
+            /*if (ret == SOCKET_ERROR)
+            {
+                break;
+            }*/
+            if(ret>0)
+            {
+                mal=QString(buf);
+                emit emitMalfunction(mal);
+                qDebug()<<buf;
+            }
+            time.start();
         }
     }
     stopped=false;

@@ -77,7 +77,6 @@ class DJIonboardSDK : public QMainWindow
     void GPRSProtocolSend_7(char res);//发送返航点设置查询协议解析结果R
     void GPRSProtocolSend_8(double Lon, double Lat);//发送当前点坐标记录轨迹G
     void GPRSProtocolSend_8(char res);//发送当前坐标轨迹记录协议解析结果G
-    void GPRSProtocolSend_9(bool isErrorUpload, char res);//发送错误信息是否上传命令F
     void GPRSProtocolSend_9(char ErrorUploadFlag, char res);//发送错误信息上传命令协议解析结果F
 
   protected:

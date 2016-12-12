@@ -186,7 +186,7 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     GPRSCommand[2]=QString("AT+CGATT=1");
     GPRSCommand[3]=QString("AT+CIPCSGP=1,\"CMNET\"");
     GPRSCommand[4]=QString("AT+CLPORT=\"TCP\",\"2000\"");
-    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.110.172\",\"9876\"");//IP
+    GPRSCommand[5]=QString("AT+CIPSTART=\"TCP\",\"115.230.103.217\",\"9876\"");//IP
     GPRSCommand[6]=QString("AT+CIPSHUT");
     GPRSConnectflag=0;
     setspeed=2.0;
@@ -1024,7 +1024,7 @@ void DJIonboardSDK::GPRSProtocolRead()
                             else
                                 isErrorUpload=false;
                             ProtocolFlag[7]=true;
-
+                            GPRSProtocolSend_9(ErrorUploadFlag,'Y');
                         }
                         else
                         {
@@ -1316,31 +1316,7 @@ void DJIonboardSDK::GPRSProtocolSend_8(char res)
     //GPRSDataSend(QString(s));
 }
 
-//开启/关闭故障自动上报功能(bool,Y/N);协议解析结果(char,N)
-void DJIonboardSDK::GPRSProtocolSend_9(bool isErrorUpload, char res)
-{
-    char s=0x1a;
-    char ErrorUpload;
-    if(isErrorUpload)
-        ErrorUpload='A';
-    else
-        ErrorUpload='D';
-
-    //GPRSDataSend("AT+CIPSEND");
-    //sleepmSec(1000);
-    QString tmp=QString("AT+CIPSEND\r|")+ProtocolHead+"=U=F="+QString(ErrorUpload)+"="+QString(res)+"=";
-    char X=tmp[0].toLatin1();
-    for(int i=1;i<tmp.length();i++)
-    {
-        X^=tmp[i].toLatin1();
-    }
-    tmp+=X;
-
-    QString temp(tmp.append("\r").append(s));
-    emit GPRSDataSend(temp);
-    //GPRSDataSend(QString(s));
-}
-
+//开启/关闭故障自动上报功能(CMD,Y/N);协议解析结果(char,N)
 void DJIonboardSDK::GPRSProtocolSend_9(char ErrorUploadFlag, char res)
 {
     char s=0x1a;
@@ -3145,8 +3121,11 @@ void DJIonboardSDK::logSignalRecv(const QString &log)
 void DJIonboardSDK::malfunctionSlot(const QString &mal)
 {
     static int cnt=1;
-    PositionData curPos=api->getBroadcastData().pos;
-    GPRSProtocolSend_4(cnt++, mal,curPos.longitude*RAD2DEG, curPos.latitude*RAD2DEG);//发送故障检测信息E
+    if(isErrorUpload)
+    {
+        PositionData curPos=api->getBroadcastData().pos;
+        GPRSProtocolSend_4(cnt++, mal,curPos.longitude*RAD2DEG, curPos.latitude*RAD2DEG);//发送故障检测信息E
+    }
 }
 
 void DJIonboardSDK::errCodeSlot(const QString &err)
