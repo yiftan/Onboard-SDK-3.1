@@ -177,7 +177,8 @@ DJIonboardSDK::DJIonboardSDK(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     GPRSst=0;
     isSendActivated=false;
     isSendConnectOk=false;
-    for(int i=0;i<6;i++){
+    isErrorUpload=false;
+    for(int i=0;i<8;i++){
         ProtocolFlag[i]=false;
     }
     GPRSCommand[0]=QString("AT+CGCLASS=\"B\"");
@@ -1009,6 +1010,33 @@ void DJIonboardSDK::GPRSProtocolRead()
                         ProtocolFlag[6]=false;
                     }
                     break;
+                case 'F':
+                    ProtocolFlag[7]=false;
+                    if(Protocol.length()>4)
+                    {
+                        char ErrorUploadFlag=Protocol[3][0].toLatin1();
+                        if(tail==X&&Protocol.length()<6)
+                        {
+
+                            //GPRSProtocolSend_9
+                            if (ErrorUploadFlag=='A')
+                                isErrorUpload=true;
+                            else
+                                isErrorUpload=false;
+                            ProtocolFlag[7]=true;
+
+                        }
+                        else
+                        {
+                            ProtocolFlag[7]=false;
+                            GPRSProtocolSend_9(ErrorUploadFlag,'N');
+                        }
+                    }
+                    else
+                    {
+                        ProtocolFlag[7]=false;
+                    }
+                    break;
                 default:
                     break;
                 }
@@ -1276,6 +1304,50 @@ void DJIonboardSDK::GPRSProtocolSend_8(char res)
     //GPRSDataSend("AT+CIPSEND");
     //sleepmSec(1000);
     QString tmp=QString("AT+CIPSEND\r|")+ProtocolHead+"=U=G="+QString(res)+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    QString temp(tmp.append("\r").append(s));
+    emit GPRSDataSend(temp);
+    //GPRSDataSend(QString(s));
+}
+
+//开启/关闭故障自动上报功能(bool,Y/N);协议解析结果(char,N)
+void DJIonboardSDK::GPRSProtocolSend_9(bool isErrorUpload, char res)
+{
+    char s=0x1a;
+    char ErrorUpload;
+    if(isErrorUpload)
+        ErrorUpload='A';
+    else
+        ErrorUpload='D';
+
+    //GPRSDataSend("AT+CIPSEND");
+    //sleepmSec(1000);
+    QString tmp=QString("AT+CIPSEND\r|")+ProtocolHead+"=U=F="+QString(ErrorUpload)+"="+QString(res)+"=";
+    char X=tmp[0].toLatin1();
+    for(int i=1;i<tmp.length();i++)
+    {
+        X^=tmp[i].toLatin1();
+    }
+    tmp+=X;
+
+    QString temp(tmp.append("\r").append(s));
+    emit GPRSDataSend(temp);
+    //GPRSDataSend(QString(s));
+}
+
+void DJIonboardSDK::GPRSProtocolSend_9(char ErrorUploadFlag, char res)
+{
+    char s=0x1a;
+
+    //GPRSDataSend("AT+CIPSEND");
+    //sleepmSec(1000);
+    QString tmp=QString("AT+CIPSEND\r|")+ProtocolHead+"=U=F="+QString(ErrorUploadFlag)+"="+QString(res)+"=";
     char X=tmp[0].toLatin1();
     for(int i=1;i<tmp.length();i++)
     {
